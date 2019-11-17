@@ -39,11 +39,10 @@ $(OUTPUT): $(OUT_DIR)/stdafx.h.gch $(OBJECTS)
 	g++-8 -L$(BIN_DIR) $(LDFLAGS) $(OBJECTS) -o$(OUTPUT) $(LIB)
 
 $(OUT_DIR)/stdafx.h.gch: pc.h
-	$(CXX) $(CXXFLAGS) ./pc.h -o $(OUT_DIR)/stdafx.h.gch -I/home/duffyj/code/libraries/boostorg/boost_1_68_0 -I/home/duffyj/code/libraries/json/include -I/home/duffyj/code/libraries/spdlog/include
+	$(CXX) $(CXXFLAGS) ./pc.h -o $(OUT_DIR)/stdafx.h.gch -I$$BOOST_ROOT -I/home/duffyj/code/libraries/json/include -I/home/duffyj/code/libraries/spdlog/include
 ######################################################################################
 $(OUT_DIR)/%.o: %.cpp %.h pc.h
-	$(CXX) $(CXXFLAGS) $(INCLUDE) ./$< -o$@ -I/home/duffyj/code/libraries/boostorg/boost_1_68_0
-	#-I/home/duffyj/code/libraries/spdlog/include -I/home/duffyj/code/libraries/json/include 
+	$(CXX) $(CXXFLAGS) $(INCLUDE) ./$< -o$@ -I$$BOOST_ROOT
 
 clean:
 	rm -rf -d $(OUT_DIR)/*.*
