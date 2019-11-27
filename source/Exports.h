@@ -1,5 +1,5 @@
 #pragma once
-#ifdef JDE_SSL_EXPORTS
+#ifdef JdeSsl_EXPORTS
 	#ifdef _MSC_VER 
 		#define JDE_SSL_EXPORT __declspec( dllexport )
 	#else
