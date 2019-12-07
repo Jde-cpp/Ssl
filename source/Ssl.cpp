@@ -1,4 +1,3 @@
-//#include "stdafx.h"
 #include "Ssl.h"
 #include <iomanip>
 #include <openssl/engine.h>

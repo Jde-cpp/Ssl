@@ -10,18 +10,18 @@ OUT_DIR_BASE := .obj/
 LIB_BASE = 
 #-lstdc++fs -lboost_system -lmatio
 ifeq ($(DEBUG), 1)
-	OUT_DIR=$(OUT_DIR_BASE)debug
+	OUT_DIR=$(OUT_DIR_BASE)debug2
 	CXXFLAGS= $(CXXFLAGS_BASE) -O0 -fsanitize=address -fno-omit-frame-pointer
-	BIN_DIR=$(BIN_DIR_BASE)debug
+	BIN_DIR=$(BIN_DIR_BASE)debug2
 	LIB=-lasan $(LIB_BASE)
 else
-	OUT_DIR=$(OUT_DIR_BASE)release
+	OUT_DIR=$(OUT_DIR_BASE)release2
 	CXXFLAGS= $(CXXFLAGS_BASE) -march=native -DNDEBUG -O3
-	BIN_DIR=$(BIN_DIR_BASE)release
+	BIN_DIR=$(BIN_DIR_BASE)release2
 	LIB=$(LIB_BASE)
 endif
 
-OUTPUT = $(BIN_DIR)/libJdeSsl.so
+OUTPUT = $(BIN_DIR)/libJde.Ssl.so
 
 # test:
 # 	@echo $(DEBUG)
@@ -41,8 +41,8 @@ $(OUTPUT): $(OUT_DIR)/stdafx.h.gch $(OBJECTS)
 $(OUT_DIR)/stdafx.h.gch: pc.h
 	$(CXX) $(CXXFLAGS) ./pc.h -o $(OUT_DIR)/stdafx.h.gch -I$$BOOST_ROOT -I/home/duffyj/code/libraries/json/include -I/home/duffyj/code/libraries/spdlog/include
 ######################################################################################
-$(OUT_DIR)/%.o: %.cpp %.h pc.h
-	$(CXX) $(CXXFLAGS) $(INCLUDE) ./$< -o$@ -I$$BOOST_ROOT
+$(OUT_DIR)/%.o: %.cpp %.h pc.h 
+	$(CXX) $(CXXFLAGS) $(INCLUDE) ./$< -o$@  -I$$BOOST_ROOT
 
 clean:
 	rm -rf -d $(OUT_DIR)/*.*
