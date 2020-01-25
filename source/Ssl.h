@@ -29,10 +29,10 @@ namespace Jde
 		JDE_SSL_EXPORT static string Encode( string_view str )noexcept;
 
 		JDE_SSL_EXPORT static std::string Encode64( const std::string &val );
-		
+
 		template<typename TResult>
 		static TResult Get( string_view host, string_view target, string_view authorization=""sv )noexcept(false);
-		
+
 		// template<typename TResult>
 		// static TResult Post( string_view host, string_view target, string_view body, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization ); }
 
@@ -41,6 +41,8 @@ namespace Jde
 
 		template<typename TResult>
 		static TResult Send( string_view host, string_view target, string_view body, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
+
+		static string SendEmpty( string_view host, string_view target, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
 
 		template<typename TResult, typename TBody>
 		static TResult Send( string_view host, string_view target, std::function<uint(http::request<TBody>&)> setBody, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
@@ -75,7 +77,7 @@ namespace Jde
 			if( wch<compare )
 			{
 				char ch = (char)*p;
-				if( isalnum(*p) || ch == '-' || ch == '_' || ch == '.' || ch == '~' ) 
+				if( isalnum(*p) || ch == '-' || ch == '_' || ch == '.' || ch == '~' )
 					os << ch;
 				else
 				{
@@ -85,8 +87,8 @@ namespace Jde
 					// 	hexcout << "0";
 					hexcout << std::setw(2) << x;
 				}
-			}				
-			else 
+			}
+			else
 			{
 				std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
 				var bytes = utf8_conv.to_bytes( wch );
@@ -122,7 +124,7 @@ namespace Jde
 	{
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
 		SetRequest( req, host, ""sv, authorization );
-		DBG( "Get {}{}", host, target );
+		TRACE( "Get {}{}"sv, host, target );
 		return Send( req, host );
 	}
 	template<typename TResult>
@@ -153,7 +155,7 @@ namespace Jde
 	{
 		http::request<TBody> req{ verb, string(target), 11 };
 		SetRequest( req, host, contentType, authorization );
-		
+
 		req.content_length( setBody(req) );
 
 		var result = Send( req, host );
@@ -173,7 +175,7 @@ namespace Jde
 
 
 	template<typename TBody>
-	string Ssl::Send( http::request<TBody>& req, string_view host )noexcept(false)
+	string Ssl::Send( http::request<TBody>& req, string_view host )noexcept(false)//boost::wrapexcept<boost::system::system_error>
 	{
 		ssl::context ctx{boost::asio::ssl::context::sslv23};
 		boost::asio::io_context ioc;
@@ -184,16 +186,31 @@ namespace Jde
 
 		tcp::resolver resolver{ioc};
 		auto const results = resolver.resolve( host, "443" );
-		boost::asio::connect( stream.next_layer(), results.begin(), results.end() );
+		try
+		{
+			boost::asio::connect( stream.next_layer(), results.begin(), results.end() );//boost::wrapexcept<boost::system::system_error>
+		}
+		catch( const boost::system::system_error& e )
+		{
+			THROW( BoostCodeException(e.code()) );
+		}
 		stream.handshake( ssl::stream_base::client );
 
 		http::request_serializer<TBody,http::fields> sr{req};
 		http::write( stream, sr );
 		http::response<http::dynamic_body> response;
 		boost::beast::flat_buffer buffer;
-		http::read( stream, buffer, response );
+		try
+		{
+			http::read( stream, buffer, response );
+		}
+		catch( const boost::system::system_error& e )
+		{
+			THROW( BoostCodeException(e.code()) );
+		}
 		var result = boost::beast::buffers_to_string( response.body().data() );
-		if( response.result_int()!=200 )
+		var resultValue = response.result_int();
+		if( resultValue!=200 && resultValue!=204 )
 		{
 			{
 				std::ofstream os{ "/tmp/ssl_error_response.json" };
@@ -207,4 +224,4 @@ namespace Jde
 		//return j.get<TBody>();
 	}
 }
-#undef var
+#undef vart

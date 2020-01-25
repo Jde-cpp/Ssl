@@ -4,8 +4,6 @@ project(Ssl)
 set(CMAKE_CXX_STANDARD 17)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
 include(SetUpConfigurations)
-string(TOLOWER ${CMAKE_BUILD_TYPE} outDir)
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin/${outDir} )
 #######################################################
 #if(MSVC)
 #	add_compile_options(PRIVATE /W4 /WX)

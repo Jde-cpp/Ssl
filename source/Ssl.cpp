@@ -29,7 +29,7 @@ namespace Jde
 			if( ch>=0 )//&& ch<128
 			{
 				char ch = (char)*p;
-				if( isalnum(*p) || ch == '-' || ch == '_' || ch == '.' || ch == '~' ) 
+				if( isalnum(*p) || ch == '-' || ch == '_' || ch == '.' || ch == '~' )
 					os << ch;
 				else
 				{
@@ -39,8 +39,8 @@ namespace Jde
 					// 	hexcout << "0";
 					hexcout << std::setw(2) << x;
 				}
-			}				
-			else 
+			}
+			else
 			{
 				//%E2%89%88
 				os << '%';
@@ -82,9 +82,9 @@ namespace Jde
 			THROW( RuntimeException("!keybio") );
 		RSA* pRsa = nullptr;
 		pRsa = PEM_read_bio_RSAPrivateKey( keybio, &pRsa, nullptr, nullptr );
-		if( !pRsa ) 
-		{ 
-			char buffer[120]; 
+		if( !pRsa )
+		{
+			char buffer[120];
 			ERR_error_string( ERR_get_error(), buffer );
 			THROW( RuntimeException(buffer) );
 		}
@@ -132,5 +132,12 @@ namespace Jde
 		//84 2B 52 99 88 7E 88 7602 12 A0 56 AC 4E C2 EE 16 26 B5 49
 		//84 e8 49 83 33 cc a5 9b 57 1c 24 de 96 e2 12 d5 57 47 50 7f
 		//return true;
+	}
+
+	string Ssl::SendEmpty( string_view host, string_view target, string_view authorization, http::verb verb )noexcept(false)
+	{
+		http::request<http::empty_body> req{ verb, string(target), 11 };
+		SetRequest( req, host, "application/x-www-form-urlencoded"sv, authorization );
+		return Send( req, host );
 	}
 }
