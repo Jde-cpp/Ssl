@@ -24,10 +24,10 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pc.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="Ssl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pc.h">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
