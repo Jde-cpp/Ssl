@@ -42,7 +42,7 @@ namespace Jde
 		template<typename TResult>
 		static TResult Send( string_view host, string_view target, string_view body, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
-		static string SendEmpty( string_view host, string_view target, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
+		JDE_SSL_EXPORT static string SendEmpty( string_view host, string_view target, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
 
 		template<typename TResult, typename TBody>
 		static TResult Send( string_view host, string_view target, std::function<uint(http::request<TBody>&)> setBody, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
