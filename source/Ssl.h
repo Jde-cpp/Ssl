@@ -2,7 +2,8 @@
 #include <boost/beast/core.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/http.hpp>
-#include <boost/asio/ssl.hpp>
+#include <boost/beast/ssl.hpp>
+//#include <boost/asio/ssl.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include "Exports.h"
@@ -52,7 +53,7 @@ namespace Jde
 
 	private:
 		template<typename TBody>
-		static void SetRequest( http::request<TBody>& req, string_view host, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept;
+		static void SetRequest( http::request<TBody>& req, string_view host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept;
 		template<typename TBody>
 		static string Send( http::request<TBody>& req, string_view host )noexcept(false);
 		JDE_SSL_EXPORT static bool verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept;
@@ -108,14 +109,14 @@ namespace Jde
 
 
 	template<typename TBody>
-	void Ssl::SetRequest( http::request<TBody>& req, string_view host, string_view contentType, string_view authorization )noexcept
+	void Ssl::SetRequest( http::request<TBody>& req, string_view host, const std::basic_string_view<char, std::char_traits<char>> contentType, string_view authorization )noexcept
 	{
-		req.set( http::field::host, host );
 		req.set( http::field::user_agent, BOOST_BEAST_VERSION_STRING );
+		req.set( http::field::host, string{host} );
 		if( contentType.size() )
-			req.set( http::field::content_type, contentType );
+			req.set( http::field::content_type, boost::beast::string_view{contentType.data(), contentType.size()} );
 		if( authorization.size() )
-			req.set( http::field::authorization, authorization );
+			req.set( http::field::authorization, boost::beast::string_view{authorization.data(), authorization.size()} );
 		req.prepare_payload();
 	}
 
@@ -177,38 +178,50 @@ namespace Jde
 	template<typename TBody>
 	string Ssl::Send( http::request<TBody>& req, string_view host )noexcept(false)//boost::wrapexcept<boost::system::system_error>
 	{
-		ssl::context ctx{boost::asio::ssl::context::sslv23};
 		boost::asio::io_context ioc;
-		ssl::stream<tcp::socket> stream{ioc, ctx};
-		stream.set_verify_callback( &verify_certificate );
-		if( !SSL_set_tlsext_host_name(stream.native_handle(), string(host).c_str()) )
+		ssl::context ctx(ssl::context::tlsv12_client);//ssl::context ctx{boost::asio::ssl::context::sslv23};
+      //load_root_certificates( ctx );
+		ctx.set_verify_mode( ssl::verify_peer );
+		tcp::resolver resolver{ ioc };
+		boost::beast::ssl_stream<boost::beast::tcp_stream> stream( ioc, ctx ); //ssl::stream<tcp::socket> stream{ioc, ctx};
+		if( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()) )
 			THROW( BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
-
-		tcp::resolver resolver{ioc};
-		auto const results = resolver.resolve( host, "443" );
+		stream.set_verify_callback( &verify_certificate );
+		var results = resolver.resolve( host, "443" );
 		try
 		{
-			boost::asio::connect( stream.next_layer(), results.begin(), results.end() );//boost::wrapexcept<boost::system::system_error>
+			boost::beast::get_lowest_layer( stream ).connect( results );
+			stream.handshake( ssl::stream_base::client );
+		//	boost::asio::connect( stream.next_layer(), results.begin(), results.end() );//boost::wrapexcept<boost::system::system_error>
+		//	stream.handshake( ssl::stream_base::client );
+		}
+		catch( boost::wrapexcept<boost::system::system_error>& e )
+		{
+			THROW( BoostCodeException(e.code()) );
 		}
 		catch( const boost::system::system_error& e )
 		{
 			THROW( BoostCodeException(e.code()) );
 		}
-		stream.handshake( ssl::stream_base::client );
 
-		http::request_serializer<TBody,http::fields> sr{req};
-		http::write( stream, sr );
+		//http::request_serializer<TBody,http::fields> sr{req};
+		http::write( stream, req );
 		http::response<http::dynamic_body> response;
 		boost::beast::flat_buffer buffer;
 		try
 		{
 			http::read( stream, buffer, response );
 		}
+		catch( boost::wrapexcept<boost::system::system_error>& e )
+		{
+			THROW( BoostCodeException(e.code()) );
+		}
 		catch( const boost::system::system_error& e )
 		{
 			THROW( BoostCodeException(e.code()) );
 		}
-		var result = boost::beast::buffers_to_string( response.body().data() );
+		var& body = response.body();
+		var result = boost::beast::buffers_to_string( body.data() );
 		var resultValue = response.result_int();
 		if( resultValue!=200 && resultValue!=204 )
 		{
@@ -218,6 +231,13 @@ namespace Jde
 			}
 			THROW( IOException(response.result_int(), "Call '{}' returned '{}'", host, response.result_int()) );
 		}
+		boost::beast::error_code ec;
+		stream.shutdown(ec);
+		if( ec == boost::asio::error::eof )
+			ec = {};
+		if( ec )
+			THROW( BoostCodeException(ec) );
+
 		return result;
 		//return string();
 		//nlohmann::json j{  };

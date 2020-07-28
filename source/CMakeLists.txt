@@ -1,9 +1,9 @@
-#export CXX=g++-8
 cmake_minimum_required(VERSION 3.16)
 project(Ssl)
-set(CMAKE_CXX_STANDARD 17)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
 include(SetUpConfigurations)
+#set(CMAKE_CXX_FLAGS "-std=c++17")
+#https://github.com/boostorg/beast/issues/1916
 #######################################################
 #if(MSVC)
 #	add_compile_options(PRIVATE /W4 /WX)
@@ -19,12 +19,9 @@ add_library( Jde.Ssl SHARED Ssl.cpp )
 #######################################################
 target_link_libraries(Jde.Ssl Threads::Threads)
 #######################################################
-include_directories(  "/home/duffyj/code/libraries/spdlog/include" )
-include_directories( "/home/duffyj/code/libraries/json/include" )
-#######################################################
 target_precompile_headers(Jde.Ssl
   PRIVATE
-		<boost/crc.hpp> 
+		<boost/crc.hpp>
 		<boost/beast/core.hpp>
 		<boost/beast/http.hpp>
 		<boost/asio/ssl.hpp>
