@@ -65,11 +65,10 @@ namespace Jde
 	template<typename T>
 	string Ssl::Encode2( basic_string_view<T> url )noexcept
 	{
+//		return boost::network::uri::encoded( url );
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
 		hexcout << std::hex << std::uppercase << std::setfill('0');
-		//uint x2=10;
-		//hexcout << "[" << x2 << "]";
 		var end = url.data()+url.size();
 		for( auto p=url.data(); p<end; ++p )
 		{
@@ -84,25 +83,30 @@ namespace Jde
 				{
 					os << '%';
 					int x = ch;
-					// if( x<16 )
-					// 	hexcout << "0";
 					hexcout << std::setw(2) << x;
 				}
 			}
 			else
 			{
-				std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-				var bytes = utf8_conv.to_bytes( wch );
-				for( var byte : bytes )
+				//std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+				//std::wstring_convert<std::codecvt<char16_t, char8_t, std::mbstate_t>>  utf8_conv;
+				//var bytes = utf8_conv.to_bytes( wch );
+				// for( var byte : bytes )
+				// {
+				// 	os << '%';
+				// 	uint8_t value = byte;
+				// 	hexcout << std::setw(2) << (uint16_t)value;//https://stackoverflow.com/questions/1532640/which-iomanip-manipulators-are-sticky
+				// }
+				auto output = [&]( char8_t ch )
 				{
 					os << '%';
-					uint8_t value = byte;
-					// if( value<16 )
-					// 	hexcout << "0";
-					hexcout << std::setw(2) << (uint16_t)value;//https://stackoverflow.com/questions/1532640/which-iomanip-manipulators-are-sticky
-				}
+					hexcout << std::setw(2) << (uint16_t)ch;//https://stackoverflow.com/questions/1532640/which-iomanip-manipulators-are-sticky
+				};
+				var upper = (wch>>8) & 0xff;
+				if( upper )
+					output( upper );
+				output( wch & 0xff );
 			}
-			//hexcout << "[" << x2 << "]";
 		}
 		return os.str();
 	}
