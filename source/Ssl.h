@@ -235,17 +235,18 @@ namespace Jde
 			}
 			THROW( IOException(response.result_int(), "Call '{}' returned '{}'", host, response.result_int()) );
 		}
+		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;
-		stream.shutdown(ec);
-		if( ec == boost::asio::error::eof )
-			ec = {};
-		if( ec )
-			THROW( BoostCodeException(ec) );
-
+		stream.shutdown( ec );
+		const boost::beast::error_code eof{ boost::asio::error::eof };//already_open==1, eof==2
+		if( ec != eof )
+			DBG( "stream.shutdown error='{}'"sv, ec.message() );
+			//THROW( BoostCodeException(ec) );
+		*/
 		return result;
 		//return string();
 		//nlohmann::json j{  };
 		//return j.get<TBody>();
 	}
 }
-#undef vart
+#undef var
