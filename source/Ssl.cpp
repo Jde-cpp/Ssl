@@ -14,7 +14,7 @@
 
 namespace Jde
 {
-	string Ssl::Encode( string_view url )noexcept
+	string Ssl::Encode( sv url )noexcept
 	{
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
@@ -119,7 +119,7 @@ namespace Jde
 		return tmp.append( (3 - val.size() % 3) % 3, '=' );
 	}
 
-	string Ssl::RsaSign( std::string_view value, std::string_view key )
+	string Ssl::RsaSign( sv value, sv key )
 	{
 		auto p = HMAC_CTX_new();
 		HMAC_Init_ex( p, (void*)key.data(), (int)key.size(), EVP_sha1(), nullptr );
@@ -134,10 +134,10 @@ namespace Jde
 		//return true;
 	}
 
-	string Ssl::SendEmpty( string_view host, string_view target, string_view authorization, http::verb verb )noexcept(false)
+	string Ssl::SendEmpty( sv host, sv target, sv authorization, http::verb verb )noexcept(false)
 	{
 		http::request<http::empty_body> req{ verb, string(target), 11 };
 		SetRequest( req, host, "application/x-www-form-urlencoded"sv, authorization );
-		return Send( req, host );
+		return Send( req, host, target );
 	}
 }

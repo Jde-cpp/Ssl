@@ -3,9 +3,10 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
-//#include <boost/asio/ssl.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
+#include "../../Framework/source/io/File.h"
+#include "../../Framework/source/threading/Mutex.h"
 #include "Exports.h"
 #include <iomanip>
 #ifdef _MSC_VER
@@ -22,50 +23,63 @@ namespace Jde
 	using std::basic_ostringstream;
 	namespace http = boost::beast::http;
 	namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+	struct SslException : IOException
+	{
+		SslException( sv host, sv target, uint code, sv result ):
+			IOException( code, "" ),
+			Host{ host },
+			Target{ target },
+			Result{ result }
+		{
+#ifndef _MSC_VER
+			constexpr sv fileName = "/tmp/ssl_error_response.json"sv;
+			auto l{ Threading::UniqueLock(string{fileName}) };
+			std::ofstream os{ fileName };
+			os << result;
+#else
+			DBG0( result );
+#endif
+		}
+		string Host;
+		string Target;
+		string Result;
+	};
 	struct Ssl
 	{
-		JDE_SSL_EXPORT static string RsaSign( string_view value, string_view key );
+		JDE_SSL_EXPORT static string RsaSign( sv value, sv key );
 		template<typename T>
 		static string Encode2( basic_string_view<T> str )noexcept;
-		JDE_SSL_EXPORT static string Encode( string_view str )noexcept;
+		JDE_SSL_EXPORT static string Encode( sv str )noexcept;
 
 		JDE_SSL_EXPORT static std::string Encode64( const std::string &val );
 
 		template<typename TResult>
-		static TResult Get( string_view host, string_view target, string_view authorization=""sv )noexcept(false);
-
-		// template<typename TResult>
-		// static TResult Post( string_view host, string_view target, string_view body, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization ); }
-
-		// template<typename TResult, typename TBody>
-		// static TResult Post( string_view host, string_view target, std::function<uint(http::request<TBody>&)> setBody, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept(false){ Send( host, target, setBody, contentType, authorization ); }
+		static TResult Get( sv host, sv target, sv authorization=""sv )noexcept(false);
 
 		template<typename TResult>
-		static TResult Send( string_view host, string_view target, string_view body, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
+		static TResult Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv, http::verb verb=http::verb::post )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
-		JDE_SSL_EXPORT static string SendEmpty( string_view host, string_view target, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
+		JDE_SSL_EXPORT static string SendEmpty( sv host, sv target, sv authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
 
 		template<typename TResult, typename TBody>
-		static TResult Send( string_view host, string_view target, std::function<uint(http::request<TBody>&)> setBody, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
+		static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
 
 		template<typename TResult>
-		static TResult PostFile( string_view host, string_view target, const fs::path& path, string_view contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept(false);
+		static TResult PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv )noexcept(false);
 
 	private:
 		template<typename TBody>
-		static void SetRequest( http::request<TBody>& req, string_view host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, string_view authorization=""sv )noexcept;
+		static void SetRequest( http::request<TBody>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv )noexcept;
 		template<typename TBody>
-		static string Send( http::request<TBody>& req, string_view host )noexcept(false);
+		static string Send( http::request<TBody>& req, sv host, sv target=""sv )noexcept(false);
 		JDE_SSL_EXPORT static bool verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
-	//make wchar_t
 	//https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
 	template<typename T>
 	string Ssl::Encode2( basic_string_view<T> url )noexcept
 	{
-//		return boost::network::uri::encoded( url );
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
 		hexcout << std::hex << std::uppercase << std::setfill('0');
@@ -88,15 +102,6 @@ namespace Jde
 			}
 			else
 			{
-				//std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-				//std::wstring_convert<std::codecvt<char16_t, char8_t, std::mbstate_t>>  utf8_conv;
-				//var bytes = utf8_conv.to_bytes( wch );
-				// for( var byte : bytes )
-				// {
-				// 	os << '%';
-				// 	uint8_t value = byte;
-				// 	hexcout << std::setw(2) << (uint16_t)value;//https://stackoverflow.com/questions/1532640/which-iomanip-manipulators-are-sticky
-				// }
 				auto output = [&]( char8_t ch )
 				{
 					os << '%';
@@ -113,7 +118,7 @@ namespace Jde
 
 
 	template<typename TBody>
-	void Ssl::SetRequest( http::request<TBody>& req, string_view host, const std::basic_string_view<char, std::char_traits<char>> contentType, string_view authorization )noexcept
+	void Ssl::SetRequest( http::request<TBody>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType, sv authorization )noexcept
 	{
 		req.set( http::field::user_agent, BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
@@ -125,7 +130,7 @@ namespace Jde
 	}
 
 	template<>
-	inline string Ssl::Get( string_view host, string_view target, string_view authorization )noexcept(false)
+	inline string Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
 	{
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
 		SetRequest( req, host, ""sv, authorization );
@@ -133,14 +138,14 @@ namespace Jde
 		return Send( req, host );
 	}
 	template<typename TResult>
-	TResult Ssl::Get( string_view host, string_view target, string_view authorization )noexcept(false)
+	TResult Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
 	{
 		var result = Get<string>( host, target, authorization );
 		var j = nlohmann::json::parse( result );
 		return j.get<TResult>();
 	}
 	template<typename TResult>
-	TResult Ssl::PostFile( string_view host, string_view target, const fs::path& path, string_view contentType, string_view authorization )noexcept(false)
+	TResult Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )noexcept(false)
 	{
 		auto fnctn = [&path](http::request<http::file_body>& req)
 		{
@@ -156,7 +161,7 @@ namespace Jde
 	}
 
 	template<typename TResultx, typename TBody>
-	TResultx Ssl::Send( string_view host, string_view target, std::function<uint(http::request<TBody>&)> setBody, string_view contentType, string_view authorization, http::verb verb )noexcept(false)
+	TResultx Ssl::Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )noexcept(false)
 	{
 		http::request<TBody> req{ verb, string(target), 11 };
 		SetRequest( req, host, contentType, authorization );
@@ -178,9 +183,8 @@ namespace Jde
 		}
 	}
 
-
 	template<typename TBody>
-	string Ssl::Send( http::request<TBody>& req, string_view host )noexcept(false)//boost::wrapexcept<boost::system::system_error>
+	string Ssl::Send( http::request<TBody>& req, sv host, sv target )noexcept(false)//boost::wrapexcept<boost::system::system_error>
 	{
 		boost::asio::io_context ioc;
 		ssl::context ctx(ssl::context::tlsv12_client);//ssl::context ctx{boost::asio::ssl::context::sslv23};
@@ -196,8 +200,6 @@ namespace Jde
 		{
 			boost::beast::get_lowest_layer( stream ).connect( results );
 			stream.handshake( ssl::stream_base::client );
-		//	boost::asio::connect( stream.next_layer(), results.begin(), results.end() );//boost::wrapexcept<boost::system::system_error>
-		//	stream.handshake( ssl::stream_base::client );
 		}
 		catch( boost::wrapexcept<boost::system::system_error>& e )
 		{
@@ -208,7 +210,6 @@ namespace Jde
 			THROW( BoostCodeException(e.code()) );
 		}
 
-		//http::request_serializer<TBody,http::fields> sr{req};
 		http::write( stream, req );
 		http::response<http::dynamic_body> response;
 		boost::beast::flat_buffer buffer;
@@ -226,15 +227,8 @@ namespace Jde
 		}
 		var& body = response.body();
 		var result = boost::beast::buffers_to_string( body.data() );
-		var resultValue = response.result_int();
-		if( resultValue!=200 && resultValue!=204 )
-		{
-			{
-				std::ofstream os{ "/tmp/ssl_error_response.json" };
-				os << result;
-			}
-			THROW( IOException(response.result_int(), "Call '{}' returned '{}'", host, response.result_int()) );
-		}
+		if( var resultValue = response.result_int(); resultValue!=200 && resultValue!=204 )
+			THROW( SslException(host, target, resultValue, result) );
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;
 		stream.shutdown( ec );
@@ -244,9 +238,6 @@ namespace Jde
 			//THROW( BoostCodeException(ec) );
 		*/
 		return result;
-		//return string();
-		//nlohmann::json j{  };
-		//return j.get<TBody>();
 	}
 }
 #undef var
