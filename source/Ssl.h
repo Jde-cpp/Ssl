@@ -52,6 +52,10 @@ namespace Jde
 		JDE_SSL_EXPORT static string Encode( sv str )noexcept;
 
 		JDE_SSL_EXPORT static std::string Encode64( const std::string &val );
+		JDE_SSL_EXPORT static std::string Decode64( const std::string& s )noexcept(false);
+
+		//static string RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false);
+		JDE_SSL_EXPORT static void Verify( const string& modulus, const string& exponent, const string& decrypted, const string& encrypted )noexcept(false);
 
 		template<typename TResult>
 		static TResult Get( sv host, sv target, sv authorization=""sv )noexcept(false);
@@ -135,7 +139,7 @@ namespace Jde
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
 		SetRequest( req, host, ""sv, authorization );
 		TRACE( "Get {}{}"sv, host, target );
-		return Send( req, host );
+		return Send( req, host, target );
 	}
 	template<typename TResult>
 	TResult Ssl::Get( sv host, sv target, sv authorization )noexcept(false)

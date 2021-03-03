@@ -1,8 +1,13 @@
 #include "Ssl.h"
+#include <boost/archive/iterators/binary_from_base64.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
+#include <boost/archive/iterators/remove_whitespace.hpp>
+
 #include <iomanip>
 #include <openssl/engine.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 //#include "../io/File.h"
 
 #include <boost/archive/iterators/binary_from_base64.hpp>
@@ -94,7 +99,7 @@ namespace Jde
 	bool RSASign( RSA* rsa, const unsigned char* Msg, size_t MsgLen, unsigned char** EncMsg,  size_t* MsgLenEnc )
 	{
 		EVP_MD_CTX* m_RSASignCtx = EVP_MD_CTX_create();
-		EVP_PKEY* priKey  = EVP_PKEY_new();
+		EVP_PKEY* priKey  = EVP_PKEY_new(); //free?
 		EVP_PKEY_assign_RSA(priKey, rsa);
 		if( EVP_DigestSignInit(m_RSASignCtx,nullptr, EVP_sha1(), nullptr,priKey)<=0 )
 			return false;
@@ -132,6 +137,115 @@ namespace Jde
 		//84 2B 52 99 88 7E 88 7602 12 A0 56 AC 4E C2 EE 16 26 B5 49
 		//84 e8 49 83 33 cc a5 9b 57 1c 24 de 96 e2 12 d5 57 47 50 7f
 		//return true;
+	}
+
+	std::string Ssl::Decode64( const std::string& s )noexcept(false) //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
+	{
+		namespace bai = boost::archive::iterators; typedef bai::transform_width< bai::binary_from_base64<bai::remove_whitespace<std::string::const_iterator> >, 8, 6 > IT;
+		return std::string{ IT(s.begin()), IT(s.end()) };
+	}
+
+	auto RsaDeleter=[](RSA* p){ RSA_free(p); };
+	auto PKeyDeleter=[](EVP_PKEY* p){ EVP_PKEY_free(p); };
+
+	//https://stackoverflow.com/questions/28770426/rsa-public-key-conversion-with-just-modulus
+	unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false)
+	{
+		BIGNUM* pMod = BN_bin2bn( (const unsigned char *)modulus.c_str(), modulus.size(), nullptr ); THROW_IF( !pMod, Exception("BN_bin2bn") );
+		//BIGNUM *pExp = nullptr;
+    	//THROW_IF( !BN_dec2bn(&pExp, exponent.c_str()), Exception("BN_dec2bn") );
+		BIGNUM *pExp = BN_bin2bn( (const unsigned char *)exponent.c_str(), exponent.size(), nullptr ); THROW_IF( !pMod, Exception("BN_bin2bn({})", exponent) );
+		unique_ptr<RSA,decltype(RsaDeleter)> pRsa{ RSA_new(), RsaDeleter };
+		RSA_set0_key( pRsa.get(), pMod, pExp, nullptr );
+
+		unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> pKey{ EVP_PKEY_new(), PKeyDeleter };
+		//EVP_PKEY* pkey = EVP_PKEY_new(); ASSERT(pkey != NULL);
+		int rc = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get()); ASSERT(rc == 1);
+		return pKey;
+
+
+		//unique_ptr<EVP_PKEY>
+
+/*		char* rawBuffer; const std::size_t buffSize;
+		std::memset( rawBuffer, 0, buffSize );
+    	BIO* buff = BIO_new( BIO_s_mem() );
+    	PEM_write_bio_PUBKEY( buff, evpKey );
+    	BIO_read( buff, rawBuffer, buffSize );
+    	BIO_free( buff );
+*/
+		 //ostringstream os;
+    	//THROW_IF( !PEM_write_RSAPublicKey(os, pRsa), Exception("PEM_write_RSAPublicKey() failed\n") );
+		//return os.str();
+	}
+
+	void rsatest();
+	void Ssl::Verify( const string& modulus, const string& exponent, const string& decrypted, const string& signature )noexcept(false)
+	{
+		rsatest();
+    	auto pCtx = EVP_MD_CTX_create();
+    	var pMd = EVP_get_digestbyname( "SHA256" ); THROW_IF( !pMd, Exception("EVP_get_digestbyname({})", "SHA256") ); //"SHA256"
+		EVP_VerifyInit_ex( pCtx, pMd, nullptr );
+		EVP_VerifyUpdate( pCtx, decrypted.c_str(), decrypted.size() );
+		var pKey = RsaPemFromModExp( modulus, exponent );
+		std::string decodedSignature = Encode64( signature );
+		var result = EVP_VerifyFinal( pCtx, (const unsigned char *)decodedSignature.c_str(), decodedSignature.size(), pKey.get() );
+		THROW_IF( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
+	}
+
+
+	void rsatest()
+	{
+		const EVP_MD *sha256 = EVP_get_digestbyname("sha256");
+
+		if(!sha256){
+		fprintf(stderr,"SHA256 not available\n");
+		return;
+		}
+
+		printf("Now try signing with X.509 certificates and EVP\n");
+
+		char ptext[16];
+		memset(ptext,0,sizeof(ptext));
+		strcpy(ptext,"Simson");
+
+		unsigned char sig[1024]={0};
+		uint32_t  siglen = sizeof(sig);
+
+		BIO *bp = BIO_new_file( "../signing_key.pem", "r" );
+
+		auto pCtx = EVP_MD_CTX_create();
+		//EVP_MD_CTX md;
+		EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bp,0,0,0);
+
+		EVP_SignInit(pCtx,sha256);
+		EVP_SignUpdate(pCtx,ptext,sizeof(ptext));
+		EVP_SignFinal(pCtx,sig,&siglen,pkey);
+
+		/* let's try to verify it */
+		BIO* bp2 = BIO_new_file( "../signing_key.pub", "r" );
+		X509 *x = 0;
+		PEM_read_bio_X509( bp2,&x,0,0 );
+		EVP_PKEY *pubkey = X509_get_pubkey(x);
+
+		printf("pubkey=%p\n",pubkey);
+
+		EVP_VerifyInit(pCtx,sha256);
+		EVP_VerifyUpdate(pCtx,ptext,sizeof(ptext));
+		int r = EVP_VerifyFinal(pCtx,sig,siglen,pubkey);
+		printf("r=%d\n",r);
+
+		printf("do it again...\n");
+		EVP_VerifyInit(pCtx,sha256);
+		EVP_VerifyUpdate(pCtx,ptext,sizeof(ptext));
+		r = EVP_VerifyFinal(pCtx,sig,siglen,pubkey);
+		printf("r=%d\n",r);
+
+		printf("make a tiny change...\n");
+		ptext[0]='f';
+		EVP_VerifyInit(pCtx,sha256);
+		EVP_VerifyUpdate(pCtx,ptext,sizeof(ptext));
+		r = EVP_VerifyFinal(pCtx,sig,siglen,pubkey);
+		printf("r=%d\n",r);
 	}
 
 	string Ssl::SendEmpty( sv host, sv target, sv authorization, http::verb verb )noexcept(false)
