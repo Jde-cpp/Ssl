@@ -10,3 +10,4 @@ source/cmake_install.cmake
 
 source/.vscode/tasks.json
 source/.bin
+source/*.i

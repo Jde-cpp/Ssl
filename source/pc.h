@@ -1,11 +1,16 @@
+
 #ifdef _MSC_VER
-	#define _CRTDBG_MAP_ALLOC
-	#include <stdlib.h>
-	#include <crtdbg.h>
+	#ifndef _NDEBUG
+		#define _CRTDBG_MAP_ALLOC
+		#include <stdlib.h>
+		#include <crtdbg.h>
+	#endif
 #endif
+/*
 #pragma warning( disable : 4245) 
 #include <boost/crc.hpp> 
 #pragma warning( default : 4245) 
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio/ssl.hpp>
@@ -19,7 +24,7 @@
 	#include <spdlog/fmt/ostr.h>
 #endif
 
-#include <nlohmann/json.hpp>
+//#include <nlohmann/json.hpp>
 
 #include "../../Framework/source/DateTime.h"
 #include "../../Framework/source/Exception.h"
@@ -27,4 +32,4 @@
 #include "../../Framework/source/log/Logging.h"
 #include "../../Framework/source/TypeDefs.h"
 #include "../../Framework/source/io/File.h"
-
+*/

@@ -1,12 +1,20 @@
 #pragma once
-#include <boost/beast/core.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/version.hpp>
+#include <boost/beast/core.hpp>
+
+#include <nlohmann/json.hpp>
+/*
+
+
 #include <boost/asio/connect.hpp>
+*/
 #include "../../Framework/source/io/File.h"
-#include "../../Framework/source/threading/Mutex.h"
+#include "../../Framework/source/log/Logging.h"
+#include "../../Framework/source/TypeDefs.h"
+//#include "../../Framework/source/threading/Mutex.h"
 #include "Exports.h"
 #include <iomanip>
 #ifdef _MSC_VER
