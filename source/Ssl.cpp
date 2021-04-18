@@ -1,20 +1,23 @@
+//#include "pc.h"
 #include "Ssl.h"
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/archive/iterators/remove_whitespace.hpp>
 
-#include <iomanip>
 #include <openssl/engine.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
-//#include "../io/File.h"
 
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/archive/iterators/remove_whitespace.hpp>
+#include "../../Framework/source/JdeAssert.h"
+/*
+#include <iomanip>
+#include <boost/archive/iterators/binary_from_base64.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
 
+#include <boost/algorithm/string.hpp>
+*/
 #define var const auto
 
 namespace Jde
@@ -51,7 +54,7 @@ namespace Jde
 				os << '%';
 				unsigned char value = ch;
 				char16_t value2 = value;
-				hexcout << std::setw(2) << value2;
+				hexcout << std::setw(2) << static_cast<uint>(value);
 				//DBG0( os.str() );
 				// std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
 				// var bytes = utf8_conv.to_bytes( wch );
