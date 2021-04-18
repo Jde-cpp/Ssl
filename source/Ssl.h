@@ -1,4 +1,5 @@
 #pragma once
+#include <nlohmann/json.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/http.hpp>
@@ -7,6 +8,7 @@
 #include <boost/asio/connect.hpp>
 #include "../../Framework/source/io/File.h"
 #include "../../Framework/source/threading/Mutex.h"
+#include "../../XZ/source/JdeZip.h"
 #include "Exports.h"
 #include <iomanip>
 #ifdef _MSC_VER
@@ -126,6 +128,7 @@ namespace Jde
 	{
 		req.set( http::field::user_agent, BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
+		req.set( http::field::accept_encoding, "gzip" );
 		if( contentType.size() )
 			req.set( http::field::content_type, boost::beast::string_view{contentType.data(), contentType.size()} );
 		if( authorization.size() )
@@ -230,9 +233,25 @@ namespace Jde
 			THROW( BoostCodeException(e.code()) );
 		}
 		var& body = response.body();
-		var result = boost::beast::buffers_to_string( body.data() );
+		auto result = boost::beast::buffers_to_string( body.data() );
 		if( var resultValue = response.result_int(); resultValue!=200 && resultValue!=204 )
 			THROW( SslException(host, target, resultValue, result) );
+		var& header = response.base();
+		string encoding;
+		for( var& h : header )
+		{
+    		if( h.name_string()=="Content-Encoding" )
+			{
+				encoding = string{ h.value() };
+				break;
+			}
+		}
+		//;
+		if( encoding=="gzip" )
+		{
+			std::istringstream is{ result };
+			result = IO::Zip::GZip::Read( is ).str();
+		}
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;
 		stream.shutdown( ec );
