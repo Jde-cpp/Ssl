@@ -1,4 +1,3 @@
-//#include "pc.h"
 #include "Ssl.h"
 
 #include <openssl/engine.h>
@@ -11,13 +10,6 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/remove_whitespace.hpp>
 #include "../../Framework/source/JdeAssert.h"
-/*
-#include <iomanip>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-
-#include <boost/algorithm/string.hpp>
-*/
 #define var const auto
 
 namespace Jde
@@ -27,13 +19,10 @@ namespace Jde
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
 		hexcout << std::hex << std::uppercase << std::setfill('0');
-		//uint x2=10;
-		//hexcout << "[" << x2 << "]";
 		var end = url.data()+url.size();
 		for( auto p=url.data(); p<end; ++p )
 		{
 			char ch = *p;
-			//char16_t compare = 128U;
 			if( ch>=0 )//&& ch<128
 			{
 				char ch = (char)*p;
@@ -43,8 +32,6 @@ namespace Jde
 				{
 					os << '%';
 					int x = ch;
-					// if( x<16 )
-					// 	hexcout << "0";
 					hexcout << std::setw(2) << x;
 				}
 			}
@@ -53,21 +40,8 @@ namespace Jde
 				//%E2%89%88
 				os << '%';
 				unsigned char value = ch;
-				char16_t value2 = value;
 				hexcout << std::setw(2) << static_cast<uint>(value);
-				//DBG0( os.str() );
-				// std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-				// var bytes = utf8_conv.to_bytes( wch );
-				// for( var byte : bytes )
-				// {
-				// 	os << '%';
-				// 	uint8_t value = byte;
-				// 	// if( value<16 )
-				// 	// 	hexcout << "0";
-				// 	hexcout << std::setw(2) << (uint16_t)value;//https://stackoverflow.com/questions/1532640/which-iomanip-manipulators-are-sticky
-				// }
 			}
-			//hexcout << "[" << x2 << "]";
 		}
 		return os.str();
 	}
@@ -137,9 +111,6 @@ namespace Jde
 		HMAC_Final( p, buffer, &length );
 		HMAC_CTX_free( p );
 		return Encode64( string(buffer, buffer+length) );
-		//84 2B 52 99 88 7E 88 7602 12 A0 56 AC 4E C2 EE 16 26 B5 49
-		//84 e8 49 83 33 cc a5 9b 57 1c 24 de 96 e2 12 d5 57 47 50 7f
-		//return true;
 	}
 
 	std::string Ssl::Decode64( const std::string& s )noexcept(false) //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
@@ -155,8 +126,6 @@ namespace Jde
 	unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false)
 	{
 		BIGNUM* pMod = BN_bin2bn( (const unsigned char *)modulus.c_str(), modulus.size(), nullptr ); THROW_IF( !pMod, Exception("BN_bin2bn") );
-		//BIGNUM *pExp = nullptr;
-    	//THROW_IF( !BN_dec2bn(&pExp, exponent.c_str()), Exception("BN_dec2bn") );
 		BIGNUM *pExp = BN_bin2bn( (const unsigned char *)exponent.c_str(), exponent.size(), nullptr ); THROW_IF( !pMod, Exception("BN_bin2bn({})", exponent) );
 		unique_ptr<RSA,decltype(RsaDeleter)> pRsa{ RSA_new(), RsaDeleter };
 		RSA_set0_key( pRsa.get(), pMod, pExp, nullptr );
@@ -165,20 +134,6 @@ namespace Jde
 		//EVP_PKEY* pkey = EVP_PKEY_new(); ASSERT(pkey != NULL);
 		int rc = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get()); ASSERT(rc == 1);
 		return pKey;
-
-
-		//unique_ptr<EVP_PKEY>
-
-/*		char* rawBuffer; const std::size_t buffSize;
-		std::memset( rawBuffer, 0, buffSize );
-    	BIO* buff = BIO_new( BIO_s_mem() );
-    	PEM_write_bio_PUBKEY( buff, evpKey );
-    	BIO_read( buff, rawBuffer, buffSize );
-    	BIO_free( buff );
-*/
-		 //ostringstream os;
-    	//THROW_IF( !PEM_write_RSAPublicKey(os, pRsa), Exception("PEM_write_RSAPublicKey() failed\n") );
-		//return os.str();
 	}
 
 	void rsatest();
