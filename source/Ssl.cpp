@@ -9,7 +9,7 @@
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/remove_whitespace.hpp>
-#include "../../Framework/source/JdeAssert.h"
+#include <jde/Assert.h>
 #define var const auto
 
 namespace Jde
@@ -125,8 +125,8 @@ namespace Jde
 	//https://stackoverflow.com/questions/28770426/rsa-public-key-conversion-with-just-modulus
 	unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false)
 	{
-		BIGNUM* pMod = BN_bin2bn( (const unsigned char *)modulus.c_str(), modulus.size(), nullptr ); THROW_IF( !pMod, Exception("BN_bin2bn") );
-		BIGNUM *pExp = BN_bin2bn( (const unsigned char *)exponent.c_str(), exponent.size(), nullptr ); THROW_IF( !pMod, Exception("BN_bin2bn({})", exponent) );
+		BIGNUM* pMod = BN_bin2bn( (const unsigned char *)modulus.c_str(), (int)modulus.size(), nullptr ); THROW_IF( !pMod, "BN_bin2bn"sv );
+		BIGNUM *pExp = BN_bin2bn( (const unsigned char *)exponent.c_str(), (int)exponent.size(), nullptr ); THROW_IF( !pMod, "BN_bin2bn({})"sv, exponent );
 		unique_ptr<RSA,decltype(RsaDeleter)> pRsa{ RSA_new(), RsaDeleter };
 		RSA_set0_key( pRsa.get(), pMod, pExp, nullptr );
 
@@ -146,7 +146,7 @@ namespace Jde
 		EVP_VerifyUpdate( pCtx, decrypted.c_str(), decrypted.size() );
 		var pKey = RsaPemFromModExp( modulus, exponent );
 		std::string decodedSignature = Encode64( signature );
-		var result = EVP_VerifyFinal( pCtx, (const unsigned char *)decodedSignature.c_str(), decodedSignature.size(), pKey.get() );
+		var result = EVP_VerifyFinal( pCtx, (const unsigned char *)decodedSignature.c_str(), (int)decodedSignature.size(), pKey.get() );
 		THROW_IF( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
 	}
 
