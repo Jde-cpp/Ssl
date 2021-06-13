@@ -1,87 +1,38 @@
 #pragma once
-#include <jde/TypeDefs.h>
-DISABLE_WARNINGS
-#include <boost/beast/core.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/beast/core.hpp>
-#include <nlohmann/json.hpp>
-ENABLE_WARNINGS
-#include <jde/io/File.h>
-#include "../../Framework/source/threading/Mutex.h"
-#include "../../XZ/source/JdeZip.h"
-#include "Exports.h"
-#include <iomanip>
-#ifdef _MSC_VER
-#include <codecvt>
-#endif
-#pragma comment(lib, "libssl.lib")
-#pragma comment(lib, "libcrypto.lib")
+#include "./TypeDefs.h"
+#include "SslException.h"
 
+#define 🚪 JDE_SSL_EXPORT static auto
 namespace Jde
 {
-	using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-	using std::basic_string_view;
-	using std::basic_string;
-	using std::basic_ostringstream;
-	namespace http = boost::beast::http;
-	namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
-	struct SslException : IOException
-	{
-		SslException( sv host, sv target, uint code, sv result ):
-			IOException( code, "" ),
-			Host{ host },
-			Target{ target },
-			Result{ result }
-		{
-#ifndef _MSC_VER
-			constexpr sv fileName = "/tmp/ssl_error_response.json"sv;
-			auto l{ Threading::UniqueLock(string{fileName}) };
-			std::ofstream os{ fileName };
-			os << result;
-#else
-			DBG0( result );
-#endif
-		}
-		string Host;
-		string Target;
-		string Result;
-	};
+	using namespace Jde::Coroutine;
 	struct Ssl
 	{
-		JDE_SSL_EXPORT static string RsaSign( sv value, sv key );
-		template<typename T>
-		static string Encode2( basic_string_view<T> str )noexcept;
-		JDE_SSL_EXPORT static string Encode( sv str )noexcept;
+		🚪 RsaSign( sv value, sv key )->string;
+		🚪 Encode( sv str )noexcept->string;
+		ⓣ static Encode2( basic_string_view<T> str )noexcept->string;
 
-		JDE_SSL_EXPORT static std::string Encode64( const std::string &val );
-		JDE_SSL_EXPORT static std::string Decode64( const std::string& s )noexcept(false);
+		🚪 Encode64( str val )->string;
+		🚪 Decode64( str s )noexcept(false)->string;
 
-		//static string RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false);
-		JDE_SSL_EXPORT static void Verify( const string& modulus, const string& exponent, const string& decrypted, const string& encrypted )noexcept(false);
+		//static string RsaPemFromModExp( str modulus, str exponent )noexcept(false);
+		🚪 Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
 
-		template<typename TResult>
-		static TResult Get( sv host, sv target, sv authorization=""sv )noexcept(false);
+		Ω CoGet( str host, str target, str authorization={} )noexcept->ErrorAwaitable;
+		ⓣ static Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
 
-		template<typename TResult>
-		static TResult Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv, http::verb verb=http::verb::post )noexcept(false){ return Send<TResult,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
+		ⓣ static Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
-		JDE_SSL_EXPORT static string SendEmpty( sv host, sv target, sv authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
+		🚪 SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
 
-		template<typename TResult, typename TBody>
-		static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv, http::verb verb=http::verb::post )noexcept(false);
+		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false);
 
-		template<typename TResult>
-		static TResult PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv )noexcept(false);
+		ⓣ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept(false)->T;
 
 	private:
-		template<typename TBody>
-		static void SetRequest( http::request<TBody>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization=""sv )noexcept;
-		template<typename TBody>
-		static string Send( http::request<TBody>& req, sv host, sv target=""sv )noexcept(false);
-		JDE_SSL_EXPORT static bool verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept;
+		ⓣ static SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept->void;
+		ⓣ static Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
+		🚪 verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
@@ -143,10 +94,19 @@ namespace Jde
 	inline string Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
 	{
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
-		SetRequest( req, host, ""sv, authorization );
+		SetRequest( req, host, {}, authorization );
 		TRACE( "Get {}{}"sv, host, target );
-		return Send( req, host, target );
+		return Send( req, host, target, authorization );
 	}
+
+	α inline Ssl::CoGet( str host, str target, str authorization )noexcept->ErrorAwaitable
+	{
+		return Coroutine::ErrorAwaitable{ [=]()->sp<string>
+		{
+			return make_shared<string>(Ssl::Get<string>(host, target, authorization) );
+		} };
+	}
+
 	template<typename TResult>
 	TResult Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
 	{
@@ -194,10 +154,10 @@ namespace Jde
 	}
 
 	template<typename TBody>
-	string Ssl::Send( http::request<TBody>& req, sv host, sv target )noexcept(false)//boost::wrapexcept<boost::system::system_error>
+	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )noexcept(false)//boost::wrapexcept<boost::system::system_error>
 	{
 		boost::asio::io_context ioc;
-		ssl::context ctx(ssl::context::tlsv12_client);//ssl::context ctx{boost::asio::ssl::context::sslv23};
+		ssl::context ctx( ssl::context::tlsv12_client );//ssl::context ctx{boost::asio::ssl::context::sslv23};
       //load_root_certificates( ctx );
 		ctx.set_verify_mode( ssl::verify_peer );
 		tcp::resolver resolver{ ioc };
@@ -205,19 +165,26 @@ namespace Jde
 		if( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()) )
 			THROW( BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
 		stream.set_verify_callback( &verify_certificate );
-		var results = resolver.resolve( host, "443" );
 		try
 		{
-			boost::beast::get_lowest_layer( stream ).connect( results );
-			stream.handshake( ssl::stream_base::client );
+			var results = resolver.resolve( host, "443" );
+			try
+			{
+				boost::beast::get_lowest_layer( stream ).connect( results );
+				stream.handshake( ssl::stream_base::client );
+			}
+			catch( boost::wrapexcept<boost::system::system_error>& e )
+			{
+				THROW( BoostCodeException(e.code()) );
+			}
+			catch( const boost::system::system_error& e )
+			{
+				THROW( BoostCodeException(e.code()) );
+			}
 		}
 		catch( boost::wrapexcept<boost::system::system_error>& e )
 		{
-			THROW( BoostCodeException(e.code()) );
-		}
-		catch( const boost::system::system_error& e )
-		{
-			THROW( BoostCodeException(e.code()) );
+			THROW( BoostCodeException(e.code(), format("Could not resolve {}/{}"sv, host, target)) );
 		}
 
 		http::write( stream, req );
@@ -237,20 +204,28 @@ namespace Jde
 		}
 		var& body = response.body();
 		auto result = boost::beast::buffers_to_string( body.data() );
-		if( var resultValue = response.result_int(); resultValue!=200 && resultValue!=204 )
+		var resultValue = response.result_int();
+		if( resultValue!=200 && resultValue!=204 && resultValue!=302 )
 			THROW( SslException(host, target, resultValue, result) );
 		var& header = response.base();
-		string encoding;
-		for( var& h : header )
+		auto findHeader = [&header]( str name )->string
 		{
-    		if( h.name_string()=="Content-Encoding" )
+			for( var& h : header )
 			{
-				encoding = string{ h.value() };
-				break;
+				if( h.name_string()==name )//https://news.google.com/rss/search?q=$AAPL&hl=en-US&gl=US&ceid=US:en
+					return string{ h.value() };
 			}
+			return {};
+		};
+		if( resultValue==302 )
+		{
+			var location = findHeader( "Location" );
+			WARN( "redirecting from {}{} to {}"sv, host, target, location );
+			var startHost = location.find_first_of( "//" ); if( startHost==string::npos || startHost+3>location.size() ) THROW( SslException(host, target, resultValue, location) );
+			var startTarget = location.find_first_of( "/", startHost+2 );
+			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
 		}
-		//;
-		if( encoding=="gzip" )
+		if( findHeader("Content-Encoding")=="gzip" )
 		{
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
@@ -267,3 +242,4 @@ namespace Jde
 	}
 }
 #undef var
+#undef 🚪

@@ -21,21 +21,4 @@ target_link_libraries(Jde.Ssl Threads::Threads)
 #######################################################
 target_precompile_headers(Jde.Ssl
   PRIVATE
-		<boost/crc.hpp>
-		<boost/beast/core.hpp>
-		<boost/beast/http.hpp>
-		<boost/asio/ssl.hpp>
-		<boost/beast/version.hpp>
-		<boost/asio/ip/tcp.hpp>
-		<boost/asio/connect.hpp>
-		<boost/system/error_code.hpp>
-		<spdlog/spdlog.h>
-		<spdlog/sinks/basic_file_sink.h>
-		<spdlog/fmt/ostr.h>
-		<nlohmann/json.hpp>
-		../../Framework/source/DateTime.h
-		../../Framework/source/Exception.h
-		../../Framework/source/JdeAssert.h
-		../../Framework/source/log/Logging.h
-		../../Framework/source/TypeDefs.h
-		../../Framework/source/io/File.h)
+)
