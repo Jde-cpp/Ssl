@@ -1,4 +1,5 @@
 #pragma once
+#include <jde/Str.h>
 #include "./TypeDefs.h"
 #include "SslException.h"
 
@@ -24,6 +25,7 @@ namespace Jde
 		ⓣ static Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
 		🚪 SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
+		🚪 CoSendEmpty( str host, str target, str authorization={} )noexcept->ErrorAwaitable;
 
 		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false);
 
@@ -97,14 +99,6 @@ namespace Jde
 		SetRequest( req, host, {}, authorization );
 		TRACE( "Get {}{}"sv, host, target );
 		return Send( req, host, target, authorization );
-	}
-
-	α inline Ssl::CoGet( str host, str target, str authorization )noexcept->ErrorAwaitable
-	{
-		return Coroutine::ErrorAwaitable{ [=]()->sp<string>
-		{
-			return make_shared<string>(Ssl::Get<string>(host, target, authorization) );
-		} };
 	}
 
 	template<typename TResult>
@@ -205,31 +199,33 @@ namespace Jde
 		var& body = response.body();
 		auto result = boost::beast::buffers_to_string( body.data() );
 		var resultValue = response.result_int();
-		if( resultValue!=200 && resultValue!=204 && resultValue!=302 )
-			THROW( SslException(host, target, resultValue, result) );
 		var& header = response.base();
-		auto findHeader = [&header]( str name )->string
+		auto findHeader = [&header]( const CIString& name )->string
 		{
 			for( var& h : header )
-			{
-				if( h.name_string()==name )//https://news.google.com/rss/search?q=$AAPL&hl=en-US&gl=US&ceid=US:en
+			{//	DBG( "[{}]={}"sv, h.name_string(), h.value() );
+				if( h.name_string()==name )
 					return string{ h.value() };
 			}
 			return {};
 		};
 		if( resultValue==302 )
 		{
-			var location = findHeader( "Location" );
+			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}"sv, host, target, location );
 			var startHost = location.find_first_of( "//" ); if( startHost==string::npos || startHost+3>location.size() ) THROW( SslException(host, target, resultValue, location) );
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
 		}
-		if( findHeader("Content-Encoding")=="gzip" )
+		var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
+		if( contentEncoding=="gzip" )
 		{
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
 		}
+		if( resultValue!=200 && resultValue!=204 && resultValue!=302 )
+			THROW( SslException(host, target, resultValue, result) );
+
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;
 		stream.shutdown( ec );

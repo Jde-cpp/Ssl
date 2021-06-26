@@ -150,7 +150,6 @@ namespace Jde
 		THROW_IF( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
 	}
 
-
 	void rsatest()
 	{
 		const EVP_MD *sha256 = EVP_get_digestbyname("sha256");
@@ -206,10 +205,26 @@ namespace Jde
 		printf("r=%d\n",r);
 	}
 
+	α Ssl::CoGet( str host, str target, str authorization )noexcept->ErrorAwaitable
+	{
+		return Coroutine::ErrorAwaitable{ [=]()->sp<string>
+		{
+			return make_shared<string>(Ssl::Get<string>(host, target, authorization) );
+		} };
+	}
+
 	string Ssl::SendEmpty( sv host, sv target, sv authorization, http::verb verb )noexcept(false)
 	{
 		http::request<http::empty_body> req{ verb, string(target), 11 };
 		SetRequest( req, host, "application/x-www-form-urlencoded"sv, authorization );
 		return Send( req, host, target );
+	}
+
+	α Ssl::CoSendEmpty( str host, str target, str authorization )noexcept->ErrorAwaitable
+	{
+		return Coroutine::ErrorAwaitable{ [=]()->sp<string>
+		{
+			return make_shared<string>( Ssl::SendEmpty(host, target, authorization) );
+		} };
 	}
 }
