@@ -15,10 +15,14 @@ include(SetUpConfigurations)
 #add_link_options( "LINKER:-rpath=$ORIGIN" )
 set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,-rpath=$ORIGIN")
 
-add_library( Jde.Ssl SHARED Ssl.cpp )
+add_library( Jde.Ssl SHARED Ssl.cpp SslCo.cpp SslWorker.cpp AsyncSession.cpp )
 #######################################################
 target_link_libraries(Jde.Ssl Threads::Threads)
 #######################################################
 target_precompile_headers(Jde.Ssl
   PRIVATE
+  <jde/TypeDefs.h>
+  <jde/coroutine/Task.h>
+  "../../Framework/source/coroutine/Awaitable.h"
+  "../../Framework/source/threading/InterruptibleThread.h"
 )

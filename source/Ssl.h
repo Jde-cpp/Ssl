@@ -3,11 +3,11 @@
 #include "./TypeDefs.h"
 #include "SslException.h"
 
-#define 🚪 JDE_SSL_EXPORT static auto
+#define 🚪 JDE_SSL_EXPORT auto
 namespace Jde
 {
 	using namespace Jde::Coroutine;
-	struct Ssl
+	namespace Ssl
 	{
 		🚪 RsaSign( sv value, sv key )->string;
 		🚪 Encode( sv str )noexcept->string;
@@ -19,7 +19,7 @@ namespace Jde
 		//static string RsaPemFromModExp( str modulus, str exponent )noexcept(false);
 		🚪 Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
 
-		Ω CoGet( str host, str target, str authorization={} )noexcept->ErrorAwaitable;
+		🚪 CoGet( str host, str target, str authorization={} )noexcept->ErrorAwaitable;
 		ⓣ static Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
 
 		ⓣ static Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
@@ -31,11 +31,10 @@ namespace Jde
 
 		ⓣ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept(false)->T;
 
-	private:
-		ⓣ static SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept->void;
-		ⓣ static Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
 		🚪 verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
-	};
+		ⓣ static SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )noexcept->void;
+		ⓣ static Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
 	//https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
@@ -80,9 +79,9 @@ namespace Jde
 
 
 	template<typename TBody>
-	void Ssl::SetRequest( http::request<TBody>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType, sv authorization )noexcept
+	void Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )noexcept
 	{
-		req.set( http::field::user_agent, BOOST_BEAST_VERSION_STRING );
+		req.set( http::field::user_agent, userAgent.size() ? string{userAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
 		req.set( http::field::accept_encoding, "gzip" );
 		if( contentType.size() )
@@ -136,7 +135,6 @@ namespace Jde
 		var j = nlohmann::json::parse( result );
 		try
 		{
-			//j.get<TResultx>();
 			TResultx result2;
 			from_json( j, result2 );
 			return result2;
@@ -151,7 +149,7 @@ namespace Jde
 	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )noexcept(false)//boost::wrapexcept<boost::system::system_error>
 	{
 		boost::asio::io_context ioc;
-		ssl::context ctx( ssl::context::tlsv12_client );//ssl::context ctx{boost::asio::ssl::context::sslv23};
+		ssl::context ctx( ssl::context::tlsv12_client );
       //load_root_certificates( ctx );
 		ctx.set_verify_mode( ssl::verify_peer );
 		tcp::resolver resolver{ ioc };

@@ -11,3 +11,4 @@ source/cmake_install.cmake
 source/.vscode/tasks.json
 source/.bin
 source/*.i
+source/.vscode/c_cpp_properties.json
