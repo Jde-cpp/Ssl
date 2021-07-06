@@ -96,12 +96,14 @@ namespace Jde::Ssl
 		{
 			var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
 			sp<string> pUnzipped;
+#ifndef _MSC_VER
 			if( contentEncoding=="gzip" )
 			{
 				std::istringstream is{ result };
 				pUnzipped = make_shared<string>( IO::Zip::GZip::Read(is).str() );
 			}
 			else
+#endif
 				pUnzipped = make_shared<string>( move(result) );
 			if( resultValue==200 || resultValue==204 )
 			{

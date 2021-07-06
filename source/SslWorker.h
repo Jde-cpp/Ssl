@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "TypeDefs.h"
 #include "Arg.h"
 
@@ -13,7 +13,7 @@ namespace Jde::Ssl
 		α Run()noexcept->void;
 
 		α HandleRequest( SslArg&& x )noexcept->void;
-		α Send( SslArg&& x )noexcept->void;
+		//α Send( SslArg&& x )noexcept->void;
 
 		static sp<SslWorker> _pInstance;
 		sp<Threading::InterruptibleThread> _pThread;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <jde/Str.h>
 #include "./TypeDefs.h"
 #include "SslException.h"
@@ -19,13 +19,11 @@ namespace Jde
 		//static string RsaPemFromModExp( str modulus, str exponent )noexcept(false);
 		🚪 Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
 
-		🚪 CoGet( str host, str target, str authorization={} )noexcept->ErrorAwaitable;
 		ⓣ static Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
 
 		ⓣ static Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
 		🚪 SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
-		🚪 CoSendEmpty( str host, str target, str authorization={} )noexcept->ErrorAwaitable;
 
 		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false);
 
@@ -83,7 +81,9 @@ namespace Jde
 	{
 		req.set( http::field::user_agent, userAgent.size() ? string{userAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
+#ifndef _MSC_VER
 		req.set( http::field::accept_encoding, "gzip" );
+#endif
 		if( contentType.size() )
 			req.set( http::field::content_type, boost::beast::string_view{contentType.data(), contentType.size()} );
 		if( authorization.size() )
@@ -218,8 +218,10 @@ namespace Jde
 		var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
 		if( contentEncoding=="gzip" )
 		{
+#ifndef _MSC_VER
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
+#endif
 		}
 		if( resultValue!=200 && resultValue!=204 && resultValue!=302 )
 			THROW( SslException(host, target, resultValue, result) );

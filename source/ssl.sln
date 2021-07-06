@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ssl", "ssl.vcxproj", "{3505B31F-01FF-458F-AFF7-193E60ECF0FE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Framework", "..\..\Framework\source\Framework.vcxproj", "{7FC3CC33-B345-423E-99B6-5D499E531FBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{3505B31F-01FF-458F-AFF7-193E60ECF0FE}.Debug|x64.Build.0 = Debug|x64
 		{3505B31F-01FF-458F-AFF7-193E60ECF0FE}.Release|x64.ActiveCfg = Release|x64
 		{3505B31F-01FF-458F-AFF7-193E60ECF0FE}.Release|x64.Build.0 = Release|x64
+		{7FC3CC33-B345-423E-99B6-5D499E531FBF}.Debug|x64.ActiveCfg = Debug|x64
+		{7FC3CC33-B345-423E-99B6-5D499E531FBF}.Debug|x64.Build.0 = Debug|x64
+		{7FC3CC33-B345-423E-99B6-5D499E531FBF}.Release|x64.ActiveCfg = Release|x64
+		{7FC3CC33-B345-423E-99B6-5D499E531FBF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

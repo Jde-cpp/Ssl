@@ -8,13 +8,13 @@ namespace Jde
 			Target{ target },
 			Result{ result }
 		{
-#ifndef _MSC_VER
+#ifdef _MSC_VER
+			DBG( result );
+#else
 			constexpr sv fileName = "/tmp/ssl_error_response.json"sv;
 			auto l{ Threading::UniqueLock(string{fileName}) };
 			std::ofstream os{ fileName };
 			os << result;
-#else
-			DBG0( result );
 #endif
 		}
 		string Host;

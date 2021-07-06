@@ -1,4 +1,4 @@
-#include "Ssl.h"
+﻿#include "Ssl.h"
 
 #include <openssl/engine.h>
 #include <openssl/hmac.h>
@@ -131,7 +131,6 @@ namespace Jde
 		RSA_set0_key( pRsa.get(), pMod, pExp, nullptr );
 
 		unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> pKey{ EVP_PKEY_new(), PKeyDeleter };
-		//EVP_PKEY* pkey = EVP_PKEY_new(); ASSERT(pkey != NULL);
 		int rc = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get()); ASSERT(rc == 1);
 		return pKey;
 	}
@@ -205,14 +204,6 @@ namespace Jde
 		printf("r=%d\n",r);
 	}
 
-	α Ssl::CoGet( str host, str target, str authorization )noexcept->ErrorAwaitable
-	{
-		return Coroutine::ErrorAwaitable{ [=]()->sp<string>
-		{
-			return make_shared<string>(Ssl::Get<string>(host, target, authorization) );
-		} };
-	}
-
 	string Ssl::SendEmpty( sv host, sv target, sv authorization, http::verb verb )noexcept(false)
 	{
 		http::request<http::empty_body> req{ verb, string(target), 11 };
@@ -220,11 +211,4 @@ namespace Jde
 		return Send( req, host, target );
 	}
 
-	α Ssl::CoSendEmpty( str host, str target, str authorization )noexcept->ErrorAwaitable
-	{
-		return Coroutine::ErrorAwaitable{ [=]()->sp<string>
-		{
-			return make_shared<string>( Ssl::SendEmpty(host, target, authorization) );
-		} };
-	}
 }

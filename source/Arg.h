@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "TypeDefs.h"
 namespace Jde::Ssl
 {
@@ -9,6 +9,9 @@ namespace Jde::Ssl
 	{
 		SslArg( string&& host, string&& target, string&& authorization, str userAgent )noexcept:
 			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, UserAgent{ userAgent }
+		{}
+		SslArg( string&& host, string&& target, string&& authorization, http::verb verb )noexcept:
+			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, Verb{ verb }
 		{}
 		~SslArg()
 		{
@@ -21,7 +24,7 @@ namespace Jde::Ssl
 		string Target;
 		string Authorization;
 		string UserAgent;
-		Coroutine::IAwaitable<Coroutine::Task2>::THandle Handle;
+		Coroutine::IAwaitable::THandle Handle;
 		std::variant<nullptr_t,string,fs::path> Body;
 		string ContentType;
 		http::verb Verb{ http::verb::get };

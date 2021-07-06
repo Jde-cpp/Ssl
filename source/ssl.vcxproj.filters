@@ -16,15 +16,21 @@
     <Filter Include="Header Files\Google">
       <UniqueIdentifier>{749e4092-37b3-4888-9990-19a0d2345758}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Google">
-      <UniqueIdentifier>{1298041e-32ae-4fee-b205-2a58376325f7}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ssl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pc.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AsyncSession.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SslCo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SslWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -43,6 +49,30 @@
     </ClInclude>
     <ClInclude Include="Google\Authorization.h">
       <Filter>Header Files\Google</Filter>
+    </ClInclude>
+    <ClInclude Include="Arg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AsyncSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SslCo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SslException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SslRoutines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SslWorker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TypeDefs.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
