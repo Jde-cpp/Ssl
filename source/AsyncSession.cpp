@@ -120,7 +120,7 @@ namespace Jde::Ssl
 
 	void AsyncSession::OnShutdown( beast::error_code ec )noexcept
 	{
-		DBG_IF( ec && ec != boost::asio::error::eof, "shutdown failed - {}"sv, ec.message() ); // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+		DBG_IF( ec && ec != boost::asio::error::eof, "shutdown failed - {}", ec.message() ); // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
 	}
 
 	uint SetFileBody( const SslArg& arg, http::request<http::file_body>& req )noexcept(false)
