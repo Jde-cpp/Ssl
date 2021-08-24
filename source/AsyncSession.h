@@ -3,14 +3,22 @@
 #include "Arg.h"
 
 #define var const auto
+namespace Jde{ struct IPollster;}
 namespace Jde::Ssl
 {
 	using boost::beast::error_code;
 	namespace beast = boost::beast;
 	//https://www.boost.org/doc/libs/1_76_0/libs/beast/example/http/client/async-ssl/http_client_async_ssl.cpp
-	struct AsyncSession : public std::enable_shared_from_this<AsyncSession>
+	struct AsyncSession final: public std::enable_shared_from_this<AsyncSession>
 	{
-		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc )noexcept:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}{}
+		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc, IPollster& pollster )noexcept:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}, _pollster{pollster}, _handle{++Handle}
+		{
+			if( ioc.stopped() )
+			{
+				DBG("ioc.stopped"sv); ioc.restart();
+			}
+		}
+		~AsyncSession();
 		void Run()noexcept;
 	private:
 		void OnResolve( error_code ec, tcp::resolver::results_type results )noexcept;
@@ -29,6 +37,10 @@ namespace Jde::Ssl
 		beast::flat_buffer _buffer;
 		http::response<http::dynamic_body> _response;
 		std::variant<up<http::request<http::empty_body>>, up<http::request<http::string_body>>, up<http::request<http::file_body>>> _pRequest;
+		IPollster& _pollster;
+		static uint Handle;
+		uint _handle;
+		constexpr static ELogLevel LogLevel{ ELogLevel::Trace };
 		constexpr static Duration Timeout{ 30s };
 	};
 

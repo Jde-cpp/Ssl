@@ -19,6 +19,7 @@ namespace Jde::Ssl
 				DBG( "~SslArg::KeepAlive={}"sv, (KeepAlive ? KeepAlive.use_count() : 0) );
 		}
 		α SetWorker( sp<SslWorker>& p )noexcept{ KeepAlive=p; }
+		string Path()const noexcept{ return format("{}/{}", Host, Target); }
 
 		string Host;
 		string Target;
