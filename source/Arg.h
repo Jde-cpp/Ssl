@@ -7,8 +7,8 @@ namespace Jde::Ssl
 
 	struct SslArg final
 	{
-		SslArg( string&& host, string&& target, string&& authorization, str userAgent )noexcept:
-			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, UserAgent{ userAgent }
+		SslArg( string&& host, string&& target, string&& authorization, str userAgent, ELogLevel level )noexcept:
+			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, UserAgent{ userAgent }, Level{ level }
 		{}
 		SslArg( string&& host, string&& target, string&& authorization, http::verb verb )noexcept:
 			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, Verb{ verb }
@@ -19,7 +19,7 @@ namespace Jde::Ssl
 				DBG( "~SslArg::KeepAlive={}"sv, (KeepAlive ? KeepAlive.use_count() : 0) );
 		}
 		α SetWorker( sp<SslWorker>& p )noexcept{ KeepAlive=p; }
-		string Path()const noexcept{ return format("{}/{}", Host, Target); }
+		α Path()const noexcept{ return format("{}/{}", Host, Target); }
 
 		string Host;
 		string Target;
@@ -30,6 +30,7 @@ namespace Jde::Ssl
 		string ContentType;
 		http::verb Verb{ http::verb::get };
 		string Port{ "443" };
+		const ELogLevel Level{ ELogLevel::Trace };
 		sp<tcp::resolver> ResolverPtr;
 		sp<ssl::context> ContextPtr;
 		sp<Stream> StreamPtr;

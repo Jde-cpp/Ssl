@@ -13,8 +13,8 @@ namespace Jde::Ssl
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
 	AsyncSession::~AsyncSession()
 	{
-		LOG( LogLevel, "({})AsyncSession::~AsyncSession('{}')", _handle );
-		_pollster.Sleep();
+		LOG( LogLevel, "({})AsyncSession::~AsyncSession()", _handle );
+		//_pollster.Sleep();
 	}
 	uint AsyncSession::Handle = 0;
 	void AsyncSession::Run()noexcept
@@ -24,7 +24,7 @@ namespace Jde::Ssl
 		{
 			LOG( LogLevel, "({})AsyncSession::SSL_set_tlsext_host_name - {}", _handle, "returned true" );
 			_resolver.async_resolve( Arg.Host, Arg.Port, beast::bind_front_handler(&AsyncSession::OnResolve, shared_from_this()) );
-			_pollster.WakeUp();
+			//_pollster.WakeUp();
 		}
 		else
 		{
