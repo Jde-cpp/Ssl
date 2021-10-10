@@ -65,8 +65,8 @@
       <PreprocessorDefinitions>JdeSsl_EXPORTS;BOOST_ALL_DYN_LINK;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <DisableSpecificWarnings>4251;4275;5104;5105</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <DisableSpecificWarnings>4251;4275;5104;5105;4305</DisableSpecificWarnings>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
@@ -95,8 +95,8 @@
       <PreprocessorDefinitions>JdeSsl_EXPORTS;BOOST_ALL_DYN_LINK;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <DisableSpecificWarnings>4251;4275;5104;5105</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <DisableSpecificWarnings>4251;4275;5104;5105;4305</DisableSpecificWarnings>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
