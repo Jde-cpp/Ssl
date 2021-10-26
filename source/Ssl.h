@@ -116,7 +116,7 @@ namespace Jde
 			http::file_body::value_type body;
 			body.open( path.string().c_str(), boost::beast::file_mode::read, ec );
 			if( ec.value()!=boost::system::errc::success )
-				THROW( BoostCodeException(ec) );
+				THROWX( BoostCodeException(ec) );
 			req.body() = std::move( body );
 			return IO::FileUtilities::GetFileSize( path );
 		};
@@ -141,7 +141,7 @@ namespace Jde
 		}
 		catch( const std::exception& e )
 		{
-			THROW( Exception(e.what()) );
+			THROW( e.what() );
 		}
 	}
 
@@ -154,8 +154,7 @@ namespace Jde
 		ctx.set_verify_mode( ssl::verify_peer );
 		tcp::resolver resolver{ ioc };
 		boost::beast::ssl_stream<boost::beast::tcp_stream> stream( ioc, ctx ); //ssl::stream<tcp::socket> stream{ioc, ctx};
-		if( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()) )
-			THROW( BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
+		THROW_IFX( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()), BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
 		stream.set_verify_callback( &verify_certificate );
 		try
 		{
@@ -167,16 +166,16 @@ namespace Jde
 			}
 			catch( boost::wrapexcept<boost::system::system_error>& e )
 			{
-				THROW( BoostCodeException(e.code()) );
+				THROWX( BoostCodeException(e.code()) );
 			}
 			catch( const boost::system::system_error& e )
 			{
-				THROW( BoostCodeException(e.code()) );
+				THROWX( BoostCodeException(e.code()) );
 			}
 		}
 		catch( boost::wrapexcept<boost::system::system_error>& e )
 		{
-			THROW( BoostCodeException(e.code(), format("Could not resolve {}/{}"sv, host, target)) );
+			THROWX( BoostCodeException(e.code(), format("Could not resolve {}/{}"sv, host, target)) );
 		}
 
 		http::write( stream, req );
@@ -188,11 +187,11 @@ namespace Jde
 		}
 		catch( boost::wrapexcept<boost::system::system_error>& e )
 		{
-			THROW( BoostCodeException(e.code()) );
+			THROWX( BoostCodeException(e.code()) );
 		}
 		catch( const boost::system::system_error& e )
 		{
-			THROW( BoostCodeException(e.code()) );
+			THROWX( BoostCodeException(e.code()) );
 		}
 		var& body = response.body();
 		auto result = boost::beast::buffers_to_string( body.data() );
@@ -211,7 +210,7 @@ namespace Jde
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}"sv, host, target, location );
-			var startHost = location.find_first_of( "//" ); if( startHost==string::npos || startHost+3>location.size() ) THROW( SslException(host, target, resultValue, location) );
+			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), SslException(host, target, resultValue, location) );
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
 		}
@@ -223,8 +222,7 @@ namespace Jde
 			result = IO::Zip::GZip::Read( is ).str();
 #endif
 		}
-		if( resultValue!=200 && resultValue!=204 && resultValue!=302 )
-			THROW( SslException(host, target, resultValue, result) );
+		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, SslException(host, target, resultValue, result) );
 
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;

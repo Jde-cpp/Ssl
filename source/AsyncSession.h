@@ -37,10 +37,8 @@ namespace Jde::Ssl
 		beast::flat_buffer _buffer;
 		http::response<http::dynamic_body> _response;
 		std::variant<up<http::request<http::empty_body>>, up<http::request<http::string_body>>, up<http::request<http::file_body>>> _pRequest;
-		//IPollster& _pollster;
 		static uint Handle;
 		uint _handle;
-		constexpr static ELogLevel LogLevel{ ELogLevel::Trace };
 		constexpr static Duration Timeout{ 30s };
 	};
 

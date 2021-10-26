@@ -59,16 +59,14 @@ namespace Jde
 
 	RSA* CreatePrivateRsa( string key )
 	{
-		BIO* keybio = BIO_new_mem_buf( (void*)key.c_str(), -1 );
-		if( !keybio )
-			THROW( RuntimeException("!keybio") );
+		BIO* keybio = BIO_new_mem_buf( (void*)key.c_str(), -1 ); THROW_IF( !keybio, "!keybio" );
 		RSA* pRsa = nullptr;
 		pRsa = PEM_read_bio_RSAPrivateKey( keybio, &pRsa, nullptr, nullptr );
 		if( !pRsa )
 		{
 			char buffer[120];
 			ERR_error_string( ERR_get_error(), buffer );
-			THROW( RuntimeException(buffer) );
+			THROW( buffer );
 		}
 		return pRsa;
 	}
@@ -140,13 +138,13 @@ namespace Jde
 	{
 		rsatest();
     	auto pCtx = EVP_MD_CTX_create();
-    	var pMd = EVP_get_digestbyname( "SHA256" ); THROW_IF( !pMd, Exception("EVP_get_digestbyname({})", "SHA256") ); //"SHA256"
+    	var pMd = EVP_get_digestbyname( "SHA256" ); THROW_IF( !pMd, "EVP_get_digestbyname({})", "SHA256" ); //"SHA256"
 		EVP_VerifyInit_ex( pCtx, pMd, nullptr );
 		EVP_VerifyUpdate( pCtx, decrypted.c_str(), decrypted.size() );
 		var pKey = RsaPemFromModExp( modulus, exponent );
 		std::string decodedSignature = Encode64( signature );
 		var result = EVP_VerifyFinal( pCtx, (const unsigned char *)decodedSignature.c_str(), (int)decodedSignature.size(), pKey.get() );
-		THROW_IF( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
+		THROW_IFX( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
 	}
 
 	void rsatest()
