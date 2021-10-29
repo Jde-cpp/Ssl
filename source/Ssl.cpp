@@ -144,7 +144,7 @@ namespace Jde
 		var pKey = RsaPemFromModExp( modulus, exponent );
 		std::string decodedSignature = Encode64( signature );
 		var result = EVP_VerifyFinal( pCtx, (const unsigned char *)decodedSignature.c_str(), (int)decodedSignature.size(), pKey.get() );
-		THROW_IFX( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
+		THROW_IFX2( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
 	}
 
 	void rsatest()

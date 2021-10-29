@@ -8,7 +8,7 @@
 namespace Jde::Ssl
 {
 	using namespace Jde::Coroutine;
-	
+
 	ELogLevel _level = Logging::TagLevel( "http", [](α l){_level=l;} );
 #define PASS_EX(e) {Arg.Handle.promise().get_return_object().SetResult(e); return CoroutinePool::Resume( move(Arg.Handle) ); }
 #define SEND_ERROR(ec,msg) PASS_EX( (BoostCodeException{ec,msg}) )
@@ -104,7 +104,7 @@ namespace Jde::Ssl
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}", Arg.Host, Arg.Target, location );
-			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), SslException(Arg.Host, Arg.Target, resultValue, location) );
+			var startHost = location.find_first_of( "//" ); THROW_IFX2( startHost==string::npos || startHost+3>location.size(), SslException(Arg.Host, Arg.Target, resultValue, location) );
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			SslArg redirect{ Arg };
 			redirect.Host = location.substr( startHost+2, startTarget-startHost-2 );
@@ -148,7 +148,7 @@ namespace Jde::Ssl
 		boost::beast::error_code ec;
 		http::file_body::value_type body;
 		var& path = get<fs::path>( arg.Body );
-		body.open( path.string().c_str(), boost::beast::file_mode::read, ec ); THROW_IFX( ec, BoostCodeException(ec,"http::file_body::value_type::open") );
+		body.open( path.string().c_str(), boost::beast::file_mode::read, ec ); THROW_IFX2( ec, BoostCodeException(ec,"http::file_body::value_type::open") );
 		var size = body.size();
 		req.body() = std::move( body );
 		return size;

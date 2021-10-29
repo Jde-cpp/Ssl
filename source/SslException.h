@@ -6,7 +6,7 @@ namespace Jde
 	struct SslException : IException
 	{
 		SslException( sv host, sv target, uint code, sv result, ELogLevel level=ELogLevel::Trace, SRCE )noexcept:
-			IException{ {Host, Target, std::to_string(Code), Result}, "{}{} ({}){}", sl },
+			IException{ {string{host}, string{target}, std::to_string(code), string{result}}, "{}{} ({}){}", sl },
 			Host{ host },
 			Target{ target },
 			Code{ code },
@@ -16,12 +16,12 @@ namespace Jde
 			_what = format( "{}{} ({}){}", Host, Target, Code, Result );
 			Log();
 		}
-		
+
 		α Log()const noexcept->void override
 		{
-			Logging::Default().log( spdlog::source_loc{FileName(_fileName).c_str(),(int)_line,_functionName.data()}, (spdlog::level::level_enum)_level, _what );
+			Logging::Default().log( spdlog::source_loc{FileName(_sl.file_name()).c_str(),(int)_sl.line(),_sl.function_name()}, (spdlog::level::level_enum)_level, _what );
 			//if( Logging::Server() )
-			//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _fileName, _functionName, _line}, vector<string>{_args}} );
+			//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
 
 #ifdef _MSC_VER
 			try
