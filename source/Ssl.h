@@ -154,7 +154,7 @@ namespace Jde
 		ctx.set_verify_mode( ssl::verify_peer );
 		tcp::resolver resolver{ ioc };
 		boost::beast::ssl_stream<boost::beast::tcp_stream> stream( ioc, ctx ); //ssl::stream<tcp::socket> stream{ioc, ctx};
-		THROW_IFX2( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()), BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
+		THROW_IFX( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()), BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
 		stream.set_verify_callback( &verify_certificate );
 		try
 		{
@@ -210,7 +210,7 @@ namespace Jde
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}"sv, host, target, location );
-			var startHost = location.find_first_of( "//" ); THROW_IFX2( startHost==string::npos || startHost+3>location.size(), SslException(host, target, resultValue, location) );
+			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), SslException(host, target, resultValue, location) );
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
 		}
@@ -222,7 +222,7 @@ namespace Jde
 			result = IO::Zip::GZip::Read( is ).str();
 #endif
 		}
-		THROW_IFX2( resultValue!=200 && resultValue!=204 && resultValue!=302, SslException(host, target, resultValue, result) );
+		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, SslException(host, target, resultValue, result) );
 
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;

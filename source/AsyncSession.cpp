@@ -7,37 +7,34 @@
 #define var const auto
 namespace Jde::Ssl
 {
-	using namespace Jde::Coroutine;
-
-	ELogLevel _level = Logging::TagLevel( "http", [](α l){_level=l;} );
+	var _logLevel{ Logging::TagLevel("http") };
+	//α LogLevel(){ return _level; }
 #define PASS_EX(e) {Arg.Handle.promise().get_return_object().SetResult(e); return CoroutinePool::Resume( move(Arg.Handle) ); }
 #define SEND_ERROR(ec,msg) PASS_EX( (BoostCodeException{ec,msg}) )
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
 	AsyncSession::~AsyncSession()
 	{
-		LOG( _level, "({})AsyncSession::~AsyncSession()", _handle );
-		//_pollster.Sleep();
+		LOG( "({})AsyncSession::~AsyncSession()", _handle );
 	}
 	uint AsyncSession::Handle = 0;
 	α AsyncSession::Run()noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::Run('{}')", _handle, Arg.Path() );
+		LOG( "({})AsyncSession::Run('{}')", _handle, Arg.Path() );
 		if( SSL_set_tlsext_host_name(_stream.native_handle(), Arg.Host.c_str()) )
 		{
-			LOG( _level, "({})AsyncSession::SSL_set_tlsext_host_name - {}", _handle, "returned true" );
+			LOG( "({})AsyncSession::SSL_set_tlsext_host_name - {}", _handle, "returned true" );
 			_resolver.async_resolve( Arg.Host, Arg.Port, beast::bind_front_handler(&AsyncSession::OnResolve, shared_from_this()) );
-			//_pollster.WakeUp();
 		}
 		else
 		{
-			LOG( _level, "({})AsyncSession::SSL_set_tlsext_host_name('{}')", _handle, "returned false" );
+			LOG( "({})AsyncSession::SSL_set_tlsext_host_name('{}')", _handle, "returned false" );
 			SEND_ERROR( (boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}), "SSL_set_tlsext_host_name" );
 		}
 	}
 
 	α AsyncSession::OnResolve( beast::error_code ec, tcp::resolver::results_type results )noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::OnResolve( {} )", _handle, ec ? "Error" : "" );
+		LOG( "({})AsyncSession::OnResolve( {} )", _handle, ec ? "Error" : "" );
 		CHECK_EC( "async_resolve" )
 		beast::get_lowest_layer( _stream ).expires_after( Timeout );
 		beast::get_lowest_layer( _stream ).async_connect( results, beast::bind_front_handler(&AsyncSession::OnConnect, shared_from_this()) );
@@ -45,7 +42,7 @@ namespace Jde::Ssl
 
 	α AsyncSession::OnConnect( beast::error_code ec, tcp::resolver::results_type::endpoint_type )noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::OnConnect( {} )", _handle, ec ? "Error" : "" );
+		LOG( "({})AsyncSession::OnConnect( {} )", _handle, ec ? "Error" : "" );
 		CHECK_EC( "async_connect" )
 		_stream.async_handshake( ssl::stream_base::client, beast::bind_front_handler(&AsyncSession::OnHandshake, shared_from_this()) );
 	}
@@ -53,7 +50,7 @@ namespace Jde::Ssl
 	α SetFileBody( const SslArg& arg, http::request<http::file_body>& req )noexcept(false)->uint;
 	α AsyncSession::OnHandshake( beast::error_code ec )noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::OnHandshake( {} )", _handle, ec ? "Error" : "" );
+		LOG( "({})AsyncSession::OnHandshake( {} )", _handle, ec ? "Error" : "" );
 		CHECK_EC( "async_handshake" )
 		beast::get_lowest_layer( _stream ).expires_after( Timeout );
 		if( Arg.Body.index()==1 )
@@ -73,7 +70,7 @@ namespace Jde::Ssl
 
 	α AsyncSession::OnWrite( beast::error_code ec, uint bytes_transferred )noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::OnWrite( {} )", _handle, ec ? "Error" : "" );
+		LOG( "({})AsyncSession::OnWrite( {} )", _handle, ec ? "Error" : "" );
 		boost::ignore_unused( bytes_transferred );
 		CHECK_EC( "async_write" )
 
@@ -82,7 +79,7 @@ namespace Jde::Ssl
 
 	α AsyncSession::OnRead( beast::error_code ec, uint bytes_transferred )noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::OnRead( {} )", _handle, ec ? "Error" : "" );
+		LOG( "({})AsyncSession::OnRead( {} )", _handle, ec ? "Error" : "" );
 		boost::ignore_unused( bytes_transferred );
 		if( ec )
 			DBG( "({})async_read={}"sv, ec.value(), ec.message() );
@@ -104,7 +101,7 @@ namespace Jde::Ssl
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}", Arg.Host, Arg.Target, location );
-			var startHost = location.find_first_of( "//" ); THROW_IFX2( startHost==string::npos || startHost+3>location.size(), SslException(Arg.Host, Arg.Target, resultValue, location) );
+			var startHost = location.find_first_of( "//" ); if( startHost==string::npos || startHost+3>location.size() ){ Arg.Handle.promise().get_return_object().SetResult( SslException(Arg.Host, Arg.Target, resultValue, location) ); return CoroutinePool::Resume( move(Arg.Handle) ); }
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			SslArg redirect{ Arg };
 			redirect.Host = location.substr( startHost+2, startTarget-startHost-2 );
@@ -139,7 +136,7 @@ namespace Jde::Ssl
 
 	α AsyncSession::OnShutdown( beast::error_code ec )noexcept->void
 	{
-		LOG( _level, "({})AsyncSession::OnShutdown( {} )", _handle, ec ? "Error" : "" );
+		LOG( "({})AsyncSession::OnShutdown( {} )", _handle, ec ? "Error" : "" );
 		DBG_IF( ec && ec != boost::asio::error::eof, "shutdown failed - {}", ec.message() ); // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
 	}
 
@@ -148,7 +145,7 @@ namespace Jde::Ssl
 		boost::beast::error_code ec;
 		http::file_body::value_type body;
 		var& path = get<fs::path>( arg.Body );
-		body.open( path.string().c_str(), boost::beast::file_mode::read, ec ); THROW_IFX2( ec, BoostCodeException(ec,"http::file_body::value_type::open") );
+		body.open( path.string().c_str(), boost::beast::file_mode::read, ec ); THROW_IFX( ec, BoostCodeException(ec,"http::file_body::value_type::open") );
 		var size = body.size();
 		req.body() = std::move( body );
 		return size;
