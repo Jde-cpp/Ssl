@@ -14,7 +14,7 @@
 
 namespace Jde
 {
-	string Ssl::Encode( sv url )noexcept
+	α Ssl::Encode( sv url )noexcept->string
 	{
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
@@ -47,7 +47,7 @@ namespace Jde
 	}
 
 	//TODO: very bad!  https://stackoverflow.com/questions/9507184/can-openssl-on-windows-use-the-system-certificate-store
-	bool Ssl::verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept
+	α Ssl::verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool
 	{
 		char subject_name[256];
 		X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
@@ -57,7 +57,7 @@ namespace Jde
 		return preverified;
 	}
 
-	RSA* CreatePrivateRsa( string key )
+	α CreatePrivateRsa( string key )->RSA*
 	{
 		BIO* keybio = BIO_new_mem_buf( (void*)key.c_str(), -1 ); THROW_IF( !keybio, "!keybio" );
 		RSA* pRsa = nullptr;
@@ -71,7 +71,7 @@ namespace Jde
 		return pRsa;
 	}
 
-	bool RSASign( RSA* rsa, const unsigned char* Msg, size_t MsgLen, unsigned char** EncMsg,  size_t* MsgLenEnc )
+	α RSASign( RSA* rsa, const unsigned char* Msg, size_t MsgLen, unsigned char** EncMsg,  size_t* MsgLenEnc )->bool
 	{
 		EVP_MD_CTX* m_RSASignCtx = EVP_MD_CTX_create();
 		EVP_PKEY* priKey  = EVP_PKEY_new(); //free?
@@ -91,15 +91,15 @@ namespace Jde
 		return true;
 	}
 	//https://stackoverflow.com/questions/7053538/how-do-i-encode-a-string-to-base64-using-only-boost
-	std::string Ssl::Encode64( const std::string &val )
+	α Ssl::Encode64( str val )->string
 	{
 		using namespace boost::archive::iterators;
-		using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
-		auto tmp = std::string( It(std::begin(val)), It(std::end(val)) );
+		using It = base64_from_binary<transform_width<string::const_iterator, 6, 8>>;
+		auto tmp = string( It(std::begin(val)), It(std::end(val)) );
 		return tmp.append( (3 - val.size() % 3) % 3, '=' );
 	}
 
-	string Ssl::RsaSign( sv value, sv key )
+	α Ssl::RsaSign( sv value, sv key )->string
 	{
 		auto p = HMAC_CTX_new();
 		HMAC_Init_ex( p, (void*)key.data(), (int)key.size(), EVP_sha1(), nullptr );
@@ -111,30 +111,30 @@ namespace Jde
 		return Encode64( string(buffer, buffer+length) );
 	}
 
-	std::string Ssl::Decode64( const std::string& s )noexcept(false) //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
+	α Ssl::Decode64( str s )noexcept(false)->string //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
 	{
-		namespace bai = boost::archive::iterators; typedef bai::transform_width< bai::binary_from_base64<bai::remove_whitespace<std::string::const_iterator> >, 8, 6 > IT;
-		return std::string{ IT(s.begin()), IT(s.end()) };
+		namespace bai = boost::archive::iterators; typedef bai::transform_width< bai::binary_from_base64<bai::remove_whitespace<string::const_iterator> >, 8, 6 > IT;
+		return string{ IT(s.begin()), IT(s.end()) };
 	}
 
 	auto RsaDeleter=[](RSA* p){ RSA_free(p); };
 	auto PKeyDeleter=[](EVP_PKEY* p){ EVP_PKEY_free(p); };
 
 	//https://stackoverflow.com/questions/28770426/rsa-public-key-conversion-with-just-modulus
-	unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false)
+	α RsaPemFromModExp( const string& modulus, const string& exponent )noexcept(false)->std::unique_ptr<EVP_PKEY,decltype(PKeyDeleter)>
 	{
 		BIGNUM* pMod = BN_bin2bn( (const unsigned char *)modulus.c_str(), (int)modulus.size(), nullptr ); THROW_IF( !pMod, "BN_bin2bn"sv );
 		BIGNUM *pExp = BN_bin2bn( (const unsigned char *)exponent.c_str(), (int)exponent.size(), nullptr ); THROW_IF( !pMod, "BN_bin2bn({})"sv, exponent );
-		unique_ptr<RSA,decltype(RsaDeleter)> pRsa{ RSA_new(), RsaDeleter };
+		std::unique_ptr<RSA,decltype(RsaDeleter)> pRsa{ RSA_new(), RsaDeleter };
 		RSA_set0_key( pRsa.get(), pMod, pExp, nullptr );
 
-		unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> pKey{ EVP_PKEY_new(), PKeyDeleter };
+		std::unique_ptr<EVP_PKEY,decltype(PKeyDeleter)> pKey{ EVP_PKEY_new(), PKeyDeleter };
 		int rc = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get()); ASSERT(rc == 1);
 		return pKey;
 	}
 
-	void rsatest();
-	void Ssl::Verify( const string& modulus, const string& exponent, const string& decrypted, const string& signature )noexcept(false)
+	α rsatest()->void;
+	α Ssl::Verify( const string& modulus, const string& exponent, const string& decrypted, const string& signature )noexcept(false)->void
 	{
 		rsatest();
     	auto pCtx = EVP_MD_CTX_create();
@@ -142,12 +142,12 @@ namespace Jde
 		EVP_VerifyInit_ex( pCtx, pMd, nullptr );
 		EVP_VerifyUpdate( pCtx, decrypted.c_str(), decrypted.size() );
 		var pKey = RsaPemFromModExp( modulus, exponent );
-		std::string decodedSignature = Encode64( signature );
+		string decodedSignature = Encode64( signature );
 		var result = EVP_VerifyFinal( pCtx, (const unsigned char *)decodedSignature.c_str(), (int)decodedSignature.size(), pKey.get() );
 		THROW_IFX( result!=1, CodeException("Ssl::Verify - failed", {result, std::generic_category()} ) );
 	}
 
-	void rsatest()
+	α rsatest()->void
 	{
 		const EVP_MD *sha256 = EVP_get_digestbyname("sha256");
 
@@ -202,7 +202,7 @@ namespace Jde
 		printf("r=%d\n",r);
 	}
 
-	string Ssl::SendEmpty( sv host, sv target, sv authorization, http::verb verb )noexcept(false)
+	α Ssl::SendEmpty( sv host, sv target, sv authorization, http::verb verb )noexcept(false)->string
 	{
 		http::request<http::empty_body> req{ verb, string(target), 11 };
 		SetRequest( req, host, "application/x-www-form-urlencoded"sv, authorization );

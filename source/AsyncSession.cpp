@@ -9,8 +9,8 @@ namespace Jde::Ssl
 {
 	var _logLevel{ Logging::TagLevel("http") };
 	//α LogLevel(){ return _level; }
-#define PASS_EX(e) {Arg.Handle.promise().get_return_object().SetResult(e); return CoroutinePool::Resume( move(Arg.Handle) ); }
-#define SEND_ERROR(ec,msg) PASS_EX( (BoostCodeException{ec,msg}) )
+#define PASS_EX(e) {Arg.Handle.promise().get_return_object().SetResult(std::dynamic_pointer_cast<IException>(e)); return CoroutinePool::Resume( move(Arg.Handle) ); }
+#define SEND_ERROR(ec,msg) PASS_EX( make_shared<BoostCodeException>(ec,msg) )
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
 	AsyncSession::~AsyncSession()
 	{
@@ -61,8 +61,8 @@ namespace Jde::Ssl
 			{
 				Write<http::file_body>( [this](http::request<http::file_body>& req){ return SetFileBody( Arg, req ); } );
 			}
-			catch( const BoostCodeException& e )
-				PASS_EX( std::make_exception_ptr(e) )
+			catch( BoostCodeException& e )
+				PASS_EX( e.Clone() )
 		}
 		else
 			Write<http::empty_body>( [](auto&){return 0;} );
@@ -101,7 +101,7 @@ namespace Jde::Ssl
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}", Arg.Host, Arg.Target, location );
-			var startHost = location.find_first_of( "//" ); if( startHost==string::npos || startHost+3>location.size() ){ Arg.Handle.promise().get_return_object().SetResult( SslException(Arg.Host, Arg.Target, resultValue, location) ); return CoroutinePool::Resume( move(Arg.Handle) ); }
+			var startHost = location.find_first_of( "//" ); if( startHost==string::npos || startHost+3>location.size() ){ Arg.Handle.promise().get_return_object().SetResult( std::dynamic_pointer_cast<IException>(make_shared<SslException>(Arg.Host, Arg.Target, resultValue, location)) ); return CoroutinePool::Resume( move(Arg.Handle) ); }
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			SslArg redirect{ Arg };
 			redirect.Host = location.substr( startHost+2, startTarget-startHost-2 );
@@ -127,7 +127,7 @@ namespace Jde::Ssl
 				CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			else
-				PASS_EX( std::make_exception_ptr(SslException(Arg.Host, Arg.Target, resultValue, result)) )
+				PASS_EX( make_shared<SslException>(Arg.Host, Arg.Target, resultValue, result) )
 		}
 		//https://github.com/boostorg/beast/issues/824
 	//	beast::get_lowest_layer( _stream ).expires_after( Timeout );
