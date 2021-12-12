@@ -39,6 +39,8 @@ namespace Jde::Ssl
 		std::variant<up<http::request<http::empty_body>>, up<http::request<http::string_body>>, up<http::request<http::file_body>>> _pRequest;
 		static uint Handle;
 		uint _handle;
+		static const LogTag& _requestLevel;
+
 		constexpr static Duration Timeout{ 30s };
 	};
 
@@ -61,6 +63,7 @@ namespace Jde::Ssl
 			req.set( http::field::authorization, boost::beast::string_view{Arg.Authorization.data(), Arg.Authorization.size()} );
 		req.prepare_payload();
 		_pRequest = move(pReq);
+		LOGL( _requestLevel.Level, "({})http://{}:{}/{}", to_string(Arg.Verb), Arg.Host, Arg.Port, Arg.Target );
 		http::async_write( _stream, req, beast::bind_front_handler(&AsyncSession::OnWrite,shared_from_this()) );
 	}
 }

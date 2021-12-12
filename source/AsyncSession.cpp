@@ -8,7 +8,8 @@
 namespace Jde::Ssl
 {
 	var _logLevel{ Logging::TagLevel("http") };
-	//α LogLevel(){ return _level; }
+	const LogTag& AsyncSession::_requestLevel{ Logging::TagLevel("http-requests") };
+
 #define PASS_EX(x) { x; Arg.Handle.promise().get_return_object().SetResult(e.Clone()); return CoroutinePool::Resume( move(Arg.Handle) ); }
 #define SEND_ERROR(ec,msg) PASS_EX( BoostCodeException e(ec,msg) )  //msvc won't let you do in 1 statement exp{}.Clone()
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
@@ -62,7 +63,10 @@ namespace Jde::Ssl
 				Write<http::file_body>( [this](http::request<http::file_body>& req){ return SetFileBody( Arg, req ); } );
 			}
 			catch( BoostCodeException& e )
-				PASS_EX( e.Clone() )
+			{
+				Arg.Handle.promise().get_return_object().SetResult( e.Clone() );//PASS_EX not working in clang
+				return CoroutinePool::Resume( move(Arg.Handle) );
+			}
 		}
 		else
 			Write<http::empty_body>( [](auto&){return 0;} );
@@ -101,12 +105,12 @@ namespace Jde::Ssl
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}", Arg.Host, Arg.Target, location );
-			var startHost = location.find_first_of( "//" ); 
+			var startHost = location.find_first_of( "//" );
 			if( startHost==string::npos || startHost+3>location.size() )
-			{ 
+			{
 				SslException e{ Arg.Host, Arg.Target, resultValue, location };
-				Arg.Handle.promise().get_return_object().SetResult( e.Clone() ); 
-				return CoroutinePool::Resume( move(Arg.Handle) ); 
+				Arg.Handle.promise().get_return_object().SetResult( e.Clone() );
+				return CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			SslArg redirect{ Arg };

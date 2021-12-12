@@ -118,7 +118,7 @@ namespace Jde
 			if( ec.value()!=boost::system::errc::success )
 				throw BoostCodeException( ec );
 			req.body() = std::move( body );
-			return IO::FileUtilities::GetFileSize( path );
+			return IO::FileSize( path );
 		};
 		return Send<TResult,http::file_body>( host, target, fnctn, contentType, authorization );
 	}
