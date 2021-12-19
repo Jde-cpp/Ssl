@@ -3,22 +3,22 @@
 	struct SslException : IException
 	{
 		SslException( sv host, sv target, uint code, sv result, ELogLevel level=ELogLevel::Trace, SRCE )noexcept;
+		SslException( SslException&& f )noexcept:IException{ move(f) }, Host{ f.Host }, Target{ f.Target }, Result{ f.Result }{}
 		α Clone()noexcept->sp<IException> override{ return std::make_shared<SslException>(move(*this)); }
 		α Log()const noexcept->void override;
-		α Ptr()->std::exception_ptr override{ return std::make_exception_ptr(*this); }
-		[[noreturn]] α Throw()->void override{ throw *this; }
+		α Ptr()->std::exception_ptr override{ return std::make_exception_ptr(move(*this)); }
+		[[noreturn]] α Throw()->void override{ throw move(*this); }
 
 		const string Host;
 		const string Target;
-		const uint Code;
 		const string Result;
 	};
 
-	inline SslException::SslException( sv host, sv target, uint code, sv result, ELogLevel level, const source_location& sl )noexcept:
-		IException{ {string{host}, string{target}, std::to_string(code), string{result}}, "{}{} ({}){}", sl }, //"
+	inline SslException::SslException( sv host, sv target, uint code, sv result, ELogLevel level, SL sl )noexcept:
+		IException{ {string{host}, string{target}, std::to_string(code), string{result}}, "{}{} ({}){}", sl, code }, //"
 		Host{ host },
 		Target{ target },
-		Code{ code },
+		//Code{ code },
 		Result{ result }
 	{
 		_level = level;
@@ -53,6 +53,5 @@
 		os << Result;
 #endif
 	}
-
 	#undef var
 }

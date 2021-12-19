@@ -3,33 +3,33 @@
 #include "./TypeDefs.h"
 #include "SslException.h"
 
-#define 🚪 JDE_SSL_EXPORT auto
+#define Φ JDE_SSL_EXPORT auto
 namespace Jde
 {
 	using namespace Jde::Coroutine;
 	namespace Ssl
 	{
-		🚪 RsaSign( sv value, sv key )->string;
-		🚪 Encode( sv str )noexcept->string;
+		Φ RsaSign( sv value, sv key )->string;
+		Φ Encode( sv str )noexcept->string;
 		ⓣ static Encode2( basic_string_view<T> str )noexcept->string;
 
-		🚪 Encode64( str val )->string;
-		🚪 Decode64( str s )noexcept(false)->string;
+		Φ Encode64( str val )->string;
+		Φ Decode64( str s )noexcept(false)->string;
 
 		//static string RsaPemFromModExp( str modulus, str exponent )noexcept(false);
-		🚪 Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
+		Φ Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
 
 		ⓣ static Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
 
 		ⓣ static Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
-		🚪 SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
+		Φ SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
 
 		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false);
 
 		ⓣ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept(false)->T;
 
-		🚪 verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
+		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
 		ⓣ static SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )noexcept->void;
 		ⓣ static Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
 	}
@@ -236,4 +236,4 @@ namespace Jde
 	}
 }
 #undef var
-#undef 🚪
+#undef Φ

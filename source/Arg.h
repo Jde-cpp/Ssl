@@ -25,7 +25,7 @@ namespace Jde::Ssl
 		string Target;
 		string Authorization;
 		string UserAgent;
-		Coroutine::IAwaitable::THandle Handle;
+		HCoroutine Handle;
 		std::variant<nullptr_t,string,fs::path> Body;
 		string ContentType;
 		http::verb Verb{ http::verb::get };

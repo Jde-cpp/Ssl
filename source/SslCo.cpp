@@ -3,7 +3,7 @@
 
 namespace Jde::Ssl
 {
-	void SslAwaitable::await_suspend( base::THandle h )noexcept
+	void SslAwaitable::await_suspend( HCoroutine h )noexcept
 	{
 		base::await_suspend( h );
 		Arg.Handle = h;

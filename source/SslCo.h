@@ -12,7 +12,7 @@ namespace Jde::Ssl
 	{
 		using base=IAwaitable;
 		SslAwaitable( SslArg&& arg )noexcept:Arg{move(arg)}{};
-		α await_suspend( base::THandle h )noexcept->void override;
+		α await_suspend( HCoroutine h )noexcept->void override;
 	private:
 		SslArg Arg;
 	};
