@@ -4,9 +4,12 @@
 	{
 		SslException( sv host, sv target, uint code, sv result, ELogLevel level=ELogLevel::Trace, SRCE )noexcept;
 		SslException( SslException&& f )noexcept:IException{ move(f) }, Host{ f.Host }, Target{ f.Target }, Result{ f.Result }{}
-		α Clone()noexcept->sp<IException> override{ return std::make_shared<SslException>(move(*this)); }
 		α Log()const noexcept->void override;
-		α Ptr()->std::exception_ptr override{ return std::make_exception_ptr(move(*this)); }
+
+		using T=SslException;
+		α Clone()noexcept->sp<IException> override{ return ms<T>(move(*this)); }
+		α Move()noexcept->up<IException> override{ return mu<T>(move(*this)); }
+		α Ptr()->std::exception_ptr override{ return Jde::make_exception_ptr(move(*this)); }
 		[[noreturn]] α Throw()->void override{ throw move(*this); }
 
 		const string Host;

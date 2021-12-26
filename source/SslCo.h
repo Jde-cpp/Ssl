@@ -8,9 +8,9 @@ namespace Jde::Ssl
 {
 	using namespace Jde::Coroutine;
 
-	struct JDE_SSL_EXPORT SslAwaitable final : IAwaitable
+	struct JDE_SSL_EXPORT SslAwaitable final : IAwait
 	{
-		using base=IAwaitable;
+		using base=IAwait;
 		SslAwaitable( SslArg&& arg )noexcept:Arg{move(arg)}{};
 		α await_suspend( HCoroutine h )noexcept->void override;
 	private:

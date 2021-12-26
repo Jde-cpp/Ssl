@@ -121,19 +121,19 @@ namespace Jde::Ssl
 		else
 		{
 			var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
-			sp<string> pUnzipped;
+			up<string> pUnzipped;
 #ifndef _MSC_VER
 			if( contentEncoding=="gzip" )
 			{
 				std::istringstream is{ result };
-				pUnzipped = make_shared<string>( IO::Zip::GZip::Read(is).str() );
+				pUnzipped = mu<string>( IO::Zip::GZip::Read(is).str() );
 			}
 			else
 #endif
-				pUnzipped = make_shared<string>( move(result) );
+				pUnzipped = mu<string>( move(result) );
 			if( resultValue==200 || resultValue==204 )
 			{
-				Arg.Handle.promise().get_return_object().SetResult( pUnzipped );
+				Arg.Handle.promise().get_return_object().SetResult( pUnzipped.release() );
 				CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			else
