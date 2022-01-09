@@ -10,7 +10,7 @@ namespace Jde::Ssl
 	var _logLevel{ Logging::TagLevel("http") };
 	const LogTag& AsyncSession::_requestLevel{ Logging::TagLevel("http-requests") };
 
-#define PASS_EX(x) { x; Arg.Handle.promise().get_return_object().SetResult(e.Clone()); return CoroutinePool::Resume( move(Arg.Handle) ); }
+#define PASS_EX(x) { x; Arg.Handle.promise().get_return_object().SetResult(move(*e.Move())); return CoroutinePool::Resume( move(Arg.Handle) ); }
 #define SEND_ERROR(ec,msg) PASS_EX( BoostCodeException e(ec,msg) )  //msvc won't let you do in 1 statement exp{}.Clone()
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
 	AsyncSession::~AsyncSession()

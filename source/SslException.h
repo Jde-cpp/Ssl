@@ -2,7 +2,7 @@
 {
 	struct SslException : IException
 	{
-		SslException( sv host, sv target, uint code, sv result, ELogLevel level=ELogLevel::Trace, SRCE )noexcept;
+		SslException( sv host, sv target, uint code, sv result, ELogLevel level=ELogLevel::Debug, SRCE )noexcept;
 		SslException( SslException&& f )noexcept:IException{ move(f) }, Host{ f.Host }, Target{ f.Target }, Result{ f.Result }{}
 		α Log()const noexcept->void override;
 
