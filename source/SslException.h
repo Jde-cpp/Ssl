@@ -24,7 +24,7 @@
 		//Code{ code },
 		Result{ result }
 	{
-		_level = level;
+		SetLevel( level );
 		_what = format( "{}{} ({}){}", Host, Target, Code, Result );
 		Log();
 	}
@@ -33,7 +33,7 @@
 	Ξ SslException::Log()const noexcept->void
 	{
 		var sl = _stack.front();
-		Logging::Default().log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)_level, _what );
+		Logging::Default().log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), _what );
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
 
