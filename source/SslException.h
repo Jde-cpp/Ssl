@@ -33,6 +33,8 @@
 	Ξ SslException::Log()const noexcept->void
 	{
 		var sl = _stack.front();
+		if( string{sl.file_name()}.ends_with("construct_at") )
+			BREAK;
 		Logging::Default().log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), _what );
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );

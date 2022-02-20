@@ -7,6 +7,6 @@ namespace Jde::Ssl
 	{
 		base::await_suspend( h );
 		Arg.Handle = h;
-		SslWorker::Push( move(Arg) );
+		SslWorker::Push( move(Arg), _sl );
 	}
 }

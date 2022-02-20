@@ -116,7 +116,7 @@ namespace Jde::Ssl
 			SslArg redirect{ Arg };
 			redirect.Host = location.substr( startHost+2, startTarget-startHost-2 );
 			redirect.Target = startTarget==string::npos ? string{} : location.substr( startTarget );
-			SslWorker::Push( move(redirect) );
+			SslWorker::Push( move(redirect), _sl );
 		}
 		else
 		{
@@ -137,7 +137,7 @@ namespace Jde::Ssl
 				CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			else
-				PASS_EX( SslException e(Arg.Host, Arg.Target, resultValue, result); )
+				PASS_EX( SslException e(Arg.Host, Arg.Target, resultValue, move(*pUnzipped), ELogLevel::Debug, _sl); )
 		}
 		//https://github.com/boostorg/beast/issues/824
 	//	beast::get_lowest_layer( _stream ).expires_after( Timeout );

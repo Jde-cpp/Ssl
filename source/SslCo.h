@@ -11,7 +11,7 @@ namespace Jde::Ssl
 	struct JDE_SSL_EXPORT SslAwaitable final : IAwait
 	{
 		using base=IAwait;
-		SslAwaitable( SslArg&& arg )noexcept:Arg{move(arg)}{};
+		SslAwaitable( SslArg&& arg, SRCE )noexcept:IAwait{sl},Arg{move(arg)}{};
 		α await_suspend( HCoroutine h )noexcept->void override;
 	private:
 		SslArg Arg;
@@ -19,9 +19,9 @@ namespace Jde::Ssl
 
 	class SslCo final
 	{
-		Ω Send( SslArg&& arg )noexcept{ return SslAwaitable{ move(arg) }; }
+		Ω Send( SslArg&& arg, SRCE )noexcept{ return SslAwaitable{ move(arg), sl }; }
 	public:
 		Ω SendEmpty( string&& host, string&& target, string&& authorization={} )noexcept{ return Send( {move(host), move(target), move(authorization), http::verb::post} ); } //??? ContentType="application/x-www-form-urlencoded"
-		Ω Get( string&& host, string&& target, string&& authorization={}, str userAgent={}, ELogLevel level=ELogLevel::Trace )noexcept{ return Send( SslArg{move(host), move(target), move(authorization), userAgent, level} ); }
+		Ω Get( string&& host, string&& target, string&& authorization={}, str userAgent={}, ELogLevel level=ELogLevel::Trace, SRCE )noexcept{ return Send( SslArg{move(host), move(target), move(authorization), userAgent, level}, sl ); }
 	};
 }

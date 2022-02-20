@@ -8,8 +8,8 @@
 namespace Jde::Ssl
 {
 	//SslWorker _instance;
-	α SslWorker::Push( SslArg&& x )noexcept->void
+	α SslWorker::Push( SslArg&& x, SL sl )noexcept->void
 	{
-		make_shared<AsyncSession>( move(x), IO::Sockets::IOContextThread::Instance()->Context() )->Run();
+		ms<AsyncSession>( move(x), IO::Sockets::IOContextThread::Instance()->Context(), sl )->Run();
 	}
 }

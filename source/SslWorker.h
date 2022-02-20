@@ -9,7 +9,7 @@ namespace Jde::Ssl
 	struct JDE_SSL_EXPORT SslWorker final : Threading::IPollWorker
 	{
 		SslWorker():Threading::IPollWorker{"Ssl"}{}
-		Ω Push( SslArg&& x )noexcept->void;
+		Ω Push( SslArg&& x, SL sl )noexcept->void;
 		//void Shutdown()noexcept override;
 	private:
 		optional<bool> Poll()noexcept override{ return _ioc.poll() ? optional<bool>{ true } : _ioc.stopped() ? std::nullopt : optional<bool>{ false }; }

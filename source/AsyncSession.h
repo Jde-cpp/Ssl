@@ -11,7 +11,7 @@ namespace Jde::Ssl
 	//https://www.boost.org/doc/libs/1_76_0/libs/beast/example/http/client/async-ssl/http_client_async_ssl.cpp
 	struct AsyncSession final: public std::enable_shared_from_this<AsyncSession>
 	{
-		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc/*, IPollster& pollster*/ )noexcept:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}, /*_pollster{pollster},*/ _handle{++Handle}
+		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc, SRCE )noexcept:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}, _sl{sl}, _handle{++Handle}
 		{
 			if( ioc.stopped() )
 			{
@@ -38,6 +38,7 @@ namespace Jde::Ssl
 		http::response<http::dynamic_body> _response;
 		std::variant<up<http::request<http::empty_body>>, up<http::request<http::string_body>>, up<http::request<http::file_body>>> _pRequest;
 		static uint Handle;
+		source_location _sl;
 		uint _handle;
 		static const LogTag& _requestLevel;
 
