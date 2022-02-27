@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <jde/Str.h>
 #include "./TypeDefs.h"
-#include "SslException.h"
 
 #define Φ JDE_SSL_EXPORT auto
 namespace Jde
@@ -210,7 +209,7 @@ namespace Jde
 		{
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}"sv, host, target, location );
-			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), SslException(host, target, resultValue, location) );
+			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), NetException(host, target, resultValue, location) );
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
 		}
@@ -222,7 +221,7 @@ namespace Jde
 			result = IO::Zip::GZip::Read( is ).str();
 #endif
 		}
-		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, SslException(host, target, resultValue, result) );
+		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, result) );
 
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;

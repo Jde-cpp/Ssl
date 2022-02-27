@@ -11,7 +11,7 @@ namespace Jde::Ssl
 	const LogTag& AsyncSession::_requestLevel{ Logging::TagLevel("http-requests") };
 
 #define PASS_EX(x) { x; Arg.Handle.promise().get_return_object().SetResult(move(*e.Move())); return CoroutinePool::Resume( move(Arg.Handle) ); }
-#define SEND_ERROR(ec,msg) PASS_EX( BoostCodeException e(ec,msg) )  //msvc won't let you do in 1 statement exp{}.Clone()
+#define SEND_ERROR(ec,msg) PASS_EX( BoostCodeException e(ec,msg, _sl) )  //msvc won't let you do in 1 statement exp{}.Clone()
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
 	AsyncSession::~AsyncSession()
 	{
@@ -108,7 +108,7 @@ namespace Jde::Ssl
 			var startHost = location.find_first_of( "//" );
 			if( startHost==string::npos || startHost+3>location.size() )
 			{
-				SslException e{ Arg.Host, Arg.Target, resultValue, location };
+				NetException e{ Arg.Host, Arg.Target, resultValue, location };
 				Arg.Handle.promise().get_return_object().SetResult( e.Clone() );
 				return CoroutinePool::Resume( move(Arg.Handle) );
 			}
@@ -137,7 +137,7 @@ namespace Jde::Ssl
 				CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			else
-				PASS_EX( SslException e(Arg.Host, Arg.Target, resultValue, move(*pUnzipped), ELogLevel::Debug, _sl); )
+				PASS_EX( NetException e(Arg.Host, Arg.Target, resultValue, move(*pUnzipped), ELogLevel::Debug, _sl); )
 		}
 		//https://github.com/boostorg/beast/issues/824
 	//	beast::get_lowest_layer( _stream ).expires_after( Timeout );
