@@ -1,7 +1,6 @@
 ﻿#include "AsyncSession.h"
 #include <jde/coroutine/Task.h>
 #include <jde/Str.h>
-#include "./SslException.h"
 #include "./SslWorker.h"
 
 #define var const auto
