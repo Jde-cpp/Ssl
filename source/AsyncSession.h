@@ -64,7 +64,8 @@ namespace Jde::Ssl
 			req.set( http::field::authorization, boost::beast::string_view{Arg.Authorization.data(), Arg.Authorization.size()} );
 		req.prepare_payload();
 		_pRequest = move(pReq);
-		LOGL( _requestLevel.Level, "({})http://{}:{}/{}", to_string(Arg.Verb), Arg.Host, Arg.Port, Arg.Target );
+
+		Logging::Log( Logging::Message{_requestLevel.Level, "({})http://{}:{}{}", _sl}, to_string(Arg.Verb), Arg.Host, Arg.Port, Arg.Target );
 		http::async_write( _stream, req, beast::bind_front_handler(&AsyncSession::OnWrite,shared_from_this()) );
 	}
 }
