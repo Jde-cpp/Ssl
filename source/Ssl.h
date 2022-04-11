@@ -18,9 +18,9 @@ namespace Jde
 		//static string RsaPemFromModExp( str modulus, str exponent )noexcept(false);
 		Φ Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
 
-		ⓣ static Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
+		ⓣ Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
 
-		ⓣ static Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
+		ⓣ Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
 		Φ SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
 
@@ -29,8 +29,9 @@ namespace Jde
 		ⓣ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept(false)->T;
 
 		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
-		ⓣ static SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )noexcept->void;
-		ⓣ static Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
+		ⓣ SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )noexcept->void;
+		ⓣ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
+		Φ NetErrorLevel()ι->ELogLevel;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
@@ -80,9 +81,7 @@ namespace Jde
 	{
 		req.set( http::field::user_agent, userAgent.size() ? string{userAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
-#ifndef _MSC_VER
 		req.set( http::field::accept_encoding, "gzip" );
-#endif
 		if( contentType.size() )
 			req.set( http::field::content_type, boost::beast::string_view{contentType.data(), contentType.size()} );
 		if( authorization.size() )
@@ -216,12 +215,10 @@ namespace Jde
 		var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
 		if( contentEncoding=="gzip" )
 		{
-#ifndef _MSC_VER
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
-#endif
 		}
-		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, result) );
+		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, move(result), NetErrorLevel()) );
 
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;

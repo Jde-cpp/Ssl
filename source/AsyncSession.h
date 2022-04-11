@@ -51,9 +51,7 @@ namespace Jde::Ssl
 		auto& req = *pReq;
 		req.set( http::field::user_agent, Arg.UserAgent.size() ? string{Arg.UserAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{Arg.Host} );
-#ifndef _MSC_VER
 		req.set( http::field::accept_encoding, "gzip" );
-#endif
 		var size = setBody( req );
 		if( size )
 		{

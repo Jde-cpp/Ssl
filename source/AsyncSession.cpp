@@ -94,7 +94,7 @@ namespace Jde::Ssl
 		auto findHeader = [&header]( const CIString& name )->string
 		{
 			for( var& h : header )
-			{//	DBG( "[{}]={}"sv, h.name_string(), h.value() );
+			{
 				if( h.name_string()==name )
 					return string{ h.value() };
 			}
@@ -121,14 +121,12 @@ namespace Jde::Ssl
 		{
 			var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
 			up<string> pUnzipped;
-#ifndef _MSC_VER
 			if( contentEncoding=="gzip" )
 			{
 				std::istringstream is{ result };
 				pUnzipped = mu<string>( IO::Zip::GZip::Read(is).str() );
 			}
 			else
-#endif
 				pUnzipped = mu<string>( move(result) );
 			if( resultValue==200 || resultValue==204 )
 			{
