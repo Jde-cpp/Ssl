@@ -31,7 +31,7 @@ namespace Jde
 		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
 		ⓣ SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )noexcept->void;
 		ⓣ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
-		Φ NetErrorLevel()ι->ELogLevel;
+		Φ NetLevel()ι->const LogTag&;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
@@ -89,6 +89,7 @@ namespace Jde
 		req.prepare_payload();
 	}
 
+#define _logLevel NetLevel()
 	template<>
 	inline string Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
 	{
@@ -218,7 +219,7 @@ namespace Jde
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
 		}
-		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, move(result), NetErrorLevel()) );
+		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, move(result), NetLevel().Level) );
 
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;
@@ -233,3 +234,4 @@ namespace Jde
 }
 #undef var
 #undef Φ
+#undef _logLevel 

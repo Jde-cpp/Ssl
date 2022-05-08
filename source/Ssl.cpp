@@ -14,8 +14,8 @@
 
 namespace Jde
 {
-	static const LogTag& _errorLevel = Logging::TagLevel( "net-error" );
-	α Ssl::NetErrorLevel()ι->ELogLevel{ return _errorLevel.Level; }
+	static const LogTag& _logLevel = Logging::TagLevel( "net" );
+	α Ssl::NetLevel()ι->const LogTag&{ return _logLevel; }
 
 	α Ssl::Encode( sv url )noexcept->string
 	{
