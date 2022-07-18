@@ -27,7 +27,7 @@ namespace Jde::Ssl
 		void OnWrite( error_code ec, uint bytes_transferred )noexcept;
 		void OnRead( error_code ec, uint bytes_transferred )noexcept;
 		void OnShutdown( error_code ec )noexcept;
-		ⓣ Write( function<uint(http::request<T>& req)> setBody )noexcept->void;
+		Ŧ Write( function<uint(http::request<T>& req)> setBody )noexcept->void;
 
 		SslArg Arg;
 		ssl::context _context{ ssl::context::tlsv12_client };
@@ -45,7 +45,7 @@ namespace Jde::Ssl
 		constexpr static Duration Timeout{ 30s };
 	};
 
-	ⓣ AsyncSession::Write( function<uint(http::request<T>& req)> setBody )noexcept->void
+	Ŧ AsyncSession::Write( function<uint(http::request<T>& req)> setBody )noexcept->void
 	{
 		auto pReq = make_unique<http::request<T>>( Arg.Verb, Arg.Target, 11 );
 		auto& req = *pReq;
