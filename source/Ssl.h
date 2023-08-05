@@ -1,4 +1,8 @@
 ﻿#pragma once
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/binary_from_base64.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
+#include <boost/archive/iterators/remove_whitespace.hpp>
 #include <jde/Str.h>
 #include "./TypeDefs.h"
 
@@ -9,35 +13,35 @@ namespace Jde
 	namespace Ssl
 	{
 		Φ RsaSign( sv value, sv key )->string;
-		Φ Encode( sv str )noexcept->string;
-		Ŧ static Encode2( basic_string_view<T> str )noexcept->string;
+		Φ Encode( sv str )ι->string;
+		Ŧ static Encode2( basic_string_view<T> str )ι->string;
 
-		Φ Encode64( str val )->string;
-		Φ Decode64( str s )noexcept(false)->string;
+		template<class T, class I=T::const_iterator> α Encode64( const T& val )->string;
+		template<class T=string> α Decode64( string s, bool convertFromFileSafe=false )ε->T;
 
-		//static string RsaPemFromModExp( str modulus, str exponent )noexcept(false);
-		Φ Verify( str modulus, str exponent, str decrypted, str encrypted )noexcept(false)->void;
+		//static string RsaPemFromModExp( str modulus, str exponent )ε;
+		Φ Verify( const vector<unsigned char>& modulus, const vector<unsigned char>& exponent, str decrypted, str encrypted )ε->void;
 
-		Ŧ Get( sv host, sv target, sv authorization={} )noexcept(false)->T;
+		Ŧ Get( sv host, sv target, sv authorization={} )ε->T;
 
-		Ŧ Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
+		Ŧ Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )ε->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
 
-		Φ SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )noexcept(false)->string;
+		Φ SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )ε->string;
 
-		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )noexcept(false);
+		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )ε;
 
-		Ŧ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )noexcept(false)->T;
+		Ŧ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )ε->T;
 
-		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )noexcept->bool;
-		Ŧ SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )noexcept->void;
-		Ŧ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )noexcept(false)->string;
+		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )ι->bool;
+		Ŧ SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )ι->void;
+		Ŧ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )ε->string;
 		Φ NetLevel()ι->const LogTag&;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
 	//https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
 	template<typename T>
-	string Ssl::Encode2( basic_string_view<T> url )noexcept
+	string Ssl::Encode2( basic_string_view<T> url )ι
 	{
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
@@ -75,9 +79,27 @@ namespace Jde
 		return os.str();
 	}
 
+	Ŧ Ssl::Decode64( string s, bool convertFromFileSafe )ε->T //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
+	{
+		if (convertFromFileSafe)
+			s = Str::Replace(Str::Replace(s, '_', '/'), '-', '+');
+		using namespace boost::archive::iterators;
+		typedef transform_width< binary_from_base64<remove_whitespace<string::const_iterator> >, 8, 6 > IT;
+		return T{ IT(s.begin()), IT(s.end()) };
+	}
+	
+	//https://stackoverflow.com/questions/7053538/how-do-i-encode-a-string-to-base64-using-only-boost
+	template<class T, class I> α Ssl::Encode64( const T& val )->string
+	{
+		//typename T;
+		using namespace boost::archive::iterators;
+		using It = base64_from_binary<transform_width<I, 6, 8>>;
+		auto t = string( It(std::begin(val)), It(std::end(val)) );
+		return t.append( (3 - val.size() % 3) % 3, '=' );
+	}
 
 	template<typename TBody>
-	void Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )noexcept
+	void Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )ι
 	{
 		req.set( http::field::user_agent, userAgent.size() ? string{userAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
@@ -91,7 +113,7 @@ namespace Jde
 
 #define _logLevel NetLevel()
 	template<>
-	inline string Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
+	inline string Ssl::Get( sv host, sv target, sv authorization )ε
 	{
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
 		SetRequest( req, host, {}, authorization );
@@ -100,14 +122,14 @@ namespace Jde
 	}
 
 	template<typename TResult>
-	TResult Ssl::Get( sv host, sv target, sv authorization )noexcept(false)
+	TResult Ssl::Get( sv host, sv target, sv authorization )ε
 	{
 		var result = Get<string>( host, target, authorization );
 		var j = nlohmann::json::parse( result );
 		return j.get<TResult>();
 	}
 	template<typename TResult>
-	TResult Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )noexcept(false)
+	TResult Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )ε
 	{
 		auto fnctn = [&path](http::request<http::file_body>& req)
 		{
@@ -123,7 +145,7 @@ namespace Jde
 	}
 
 	template<typename TResultx, typename TBody>
-	TResultx Ssl::Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )noexcept(false)
+	TResultx Ssl::Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )ε
 	{
 		http::request<TBody> req{ verb, string(target), 11 };
 		SetRequest( req, host, contentType, authorization );
@@ -145,7 +167,7 @@ namespace Jde
 	}
 
 	template<typename TBody>
-	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )noexcept(false)//boost::wrapexcept<boost::system::system_error>
+	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )ε//boost::wrapexcept<boost::system::system_error>
 	{
 		boost::asio::io_context ioc;
 		ssl::context ctx( ssl::context::tlsv12_client );
