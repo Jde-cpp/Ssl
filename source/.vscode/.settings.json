@@ -1,3 +1,7 @@
 {
-	"window.title": "Ssl"
+	"window.title": "Ssl",
+	"files.associations": {
+		"*.sqlm": "sql",
+		"string_view": "cpp"
+	}
 }

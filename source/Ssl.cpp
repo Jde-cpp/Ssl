@@ -15,36 +15,26 @@ namespace Jde
 	static const LogTag& _logLevel = Logging::TagLevel( "net" );
 	α Ssl::NetLevel()ι->const LogTag&{ return _logLevel; }
 
-	α Ssl::Encode( sv url )ι->string
+	α Ssl::DecodeUri( sv x )ι->string
 	{
-		ostringstream os;
-		std::ostream hexcout{ os.rdbuf() };
-		hexcout << std::hex << std::uppercase << std::setfill('0');
-		var end = url.data()+url.size();
-		for( auto p=url.data(); p<end; ++p )
+		auto from_hex = [](char ch) { return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10; };
+		string y{}; y.reserve( x.size() );
+    for (auto i = x.begin(), n = x.end(); i != n; ++i)
 		{
-			char ch = *p;
-			if( ch>=0 )//&& ch<128
+			char ch = *i;
+      if( ch == '%' )
 			{
-				char ch = (char)*p;
-				if( isalnum(*p) || ch == '-' || ch == '_' || ch == '.' || ch == '~' )
-					os << ch;
-				else
+        if (i[1] && i[2])
 				{
-					os << '%';
-					int x = ch;
-					hexcout << std::setw(2) << x;
-				}
-			}
-			else
-			{
-				//%E2%89%88
-				os << '%';
-				unsigned char value = ch;
-				hexcout << std::setw(2) << static_cast<uint>(value);
-			}
+          ch = from_hex(i[1]) << 4 | from_hex(i[2]);
+          i += 2;
+        }
+      }
+			else if (ch == '+')
+        ch = ' ';
+			y+=ch;
 		}
-		return os.str();
+		return y;
 	}
 
 	//TODO: very bad!  https://stackoverflow.com/questions/9507184/can-openssl-on-windows-use-the-system-certificate-store

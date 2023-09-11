@@ -22,8 +22,6 @@ ENABLE_WARNINGS
 namespace Jde
 {
 	using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-	using std::basic_string_view;
-	using std::basic_string;
 	using std::basic_ostringstream;
 	namespace http = boost::beast::http;
 	namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>

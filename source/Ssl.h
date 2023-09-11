@@ -13,8 +13,8 @@ namespace Jde
 	namespace Ssl
 	{
 		Φ RsaSign( sv value, sv key )->string;
-		Φ Encode( sv str )ι->string;
-		Ŧ static Encode2( basic_string_view<T> str )ι->string;
+		Φ DecodeUri( sv str )ι->string;
+		Ŧ static Encode( std::basic_string_view<T> str )ι->string;
 
 		template<class T, class I=T::const_iterator> α Encode64( const T& val )->string;
 		template<class T=string> α Decode64( string s, bool convertFromFileSafe=false )ε->T;
@@ -33,7 +33,7 @@ namespace Jde
 		Ŧ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )ε->T;
 
 		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )ι->bool;
-		Ŧ SetRequest( http::request<T>& req, sv host, const std::basic_string_view<char, std::char_traits<char>> contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )ι->void;
+		Ŧ SetRequest( http::request<T>& req, sv host, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )ι->void;
 		Ŧ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )ε->string;
 		Φ NetLevel()ι->const LogTag&;
 	}
@@ -41,7 +41,7 @@ namespace Jde
 #define var const auto
 	//https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
 	template<typename T>
-	string Ssl::Encode2( basic_string_view<T> url )ι
+	string Ssl::Encode( std::basic_string_view<T> url )ι
 	{
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
@@ -87,7 +87,7 @@ namespace Jde
 		typedef transform_width< binary_from_base64<remove_whitespace<string::const_iterator> >, 8, 6 > IT;
 		return T{ IT(s.begin()), IT(s.end()) };
 	}
-	
+
 	//https://stackoverflow.com/questions/7053538/how-do-i-encode-a-string-to-base64-using-only-boost
 	template<class T, class I> α Ssl::Encode64( const T& val )->string
 	{

@@ -23,6 +23,8 @@ target_precompile_headers(Jde.Ssl
   PRIVATE
   <jde/TypeDefs.h>
   <jde/coroutine/Task.h>
+	"../../Framework/source/io/Socket.h"
+	"../../Framework/source/io/AsioContextThread.h"
   "../../Framework/source/coroutine/Awaitable.h"
   "../../Framework/source/threading/InterruptibleThread.h"
 )
