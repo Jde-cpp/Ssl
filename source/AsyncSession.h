@@ -40,7 +40,7 @@ namespace Jde::Ssl
 		static uint Handle;
 		source_location _sl;
 		uint _handle;
-		static const LogTag& _requestLevel;
+		static sp<LogTag> _requestLevel;
 
 		constexpr static Duration Timeout{ 30s };
 	};

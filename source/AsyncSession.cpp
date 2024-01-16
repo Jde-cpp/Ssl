@@ -9,7 +9,7 @@ namespace Jde::Ssl
 	var _logLevel{ Logging::TagLevel("http") };
 	const LogTag& AsyncSession::_requestLevel{ Logging::TagLevel("http-requests") };
 
-#define PASS_EX(x) { x; Arg.Handle.promise().get_return_object().SetResult(move(*e.Move())); return CoroutinePool::Resume( move(Arg.Handle) ); }
+#define PASS_EX(x) { x; Arg.Handle.promise().SetResult(move(*e.Move())); return CoroutinePool::Resume( move(Arg.Handle) ); }
 #define SEND_ERROR(ec,msg) PASS_EX( BoostCodeException e(ec,msg, _sl) )  //msvc won't let you do in 1 statement exp{}.Clone()
 #define CHECK_EC(msg) if(ec) SEND_ERROR( ec, msg )
 	AsyncSession::~AsyncSession()
@@ -63,7 +63,7 @@ namespace Jde::Ssl
 			}
 			catch( BoostCodeException& e )
 			{
-				Arg.Handle.promise().get_return_object().SetResult( e.Clone() );//PASS_EX not working in clang
+				Arg.Handle.promise().SetResult( e.Move() );//PASS_EX not working in clang
 				return CoroutinePool::Resume( move(Arg.Handle) );
 			}
 		}
@@ -108,7 +108,7 @@ namespace Jde::Ssl
 			if( startHost==string::npos || startHost+3>location.size() )
 			{
 				NetException e{ Arg.Host, Arg.Target, resultValue, location };
-				Arg.Handle.promise().get_return_object().SetResult( e.Clone() );
+				Arg.Handle.promise().SetResult( e.Move() );
 				return CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			var startTarget = location.find_first_of( "/", startHost+2 );
@@ -130,7 +130,7 @@ namespace Jde::Ssl
 				pUnzipped = mu<string>( move(result) );
 			if( resultValue==200 || resultValue==204 )
 			{
-				Arg.Handle.promise().get_return_object().SetResult( pUnzipped.release() );
+				Arg.Handle.promise().SetResult( move(pUnzipped) );
 				CoroutinePool::Resume( move(Arg.Handle) );
 			}
 			else

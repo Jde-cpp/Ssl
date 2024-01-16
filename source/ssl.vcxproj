@@ -23,7 +23,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <EnableASAN>false</EnableASAN>
+    <EnableASAN>true</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -45,7 +45,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <TargetName>Jde.$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir).obj\$(ProjectName)\$(Configuration)\</IntDir>
@@ -62,15 +62,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JdeSsl_EXPORTS;BOOST_ALL_DYN_LINK;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JdeSsl_EXPORTS;BOOST_ALL_DYN_LINK;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pc.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4251;4275;5104;5105;4305</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4068;4251;4275;4305;5104;5105;5260</DisableSpecificWarnings>
       <ForcedIncludeFiles>pc.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,15 +95,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JdeSsl_EXPORTS;BOOST_ALL_DYN_LINK;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JdeSsl_EXPORTS;BOOST_ALL_DYN_LINK;_CRT_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pc.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4251;4275;5104;5105;4305</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4068;4251;4275;4305;5104;5105;5260</DisableSpecificWarnings>
       <ForcedIncludeFiles>pc.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
