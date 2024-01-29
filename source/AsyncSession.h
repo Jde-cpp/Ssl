@@ -3,31 +3,29 @@
 #include "Arg.h"
 
 #define var const auto
+#define _logTag NetTag()
 namespace Jde{ struct IPollster;}
-namespace Jde::Ssl
-{
+namespace Jde::Ssl{
 	using boost::beast::error_code;
 	namespace beast = boost::beast;
 	//https://www.boost.org/doc/libs/1_76_0/libs/beast/example/http/client/async-ssl/http_client_async_ssl.cpp
 	struct AsyncSession final: public std::enable_shared_from_this<AsyncSession>
 	{
-		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc, SRCE )noexcept:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}, _sl{sl}, _handle{++Handle}
+		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc, SRCE )ι:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}, _sl{sl}, _handle{++Handle}
 		{
 			if( ioc.stopped() )
-			{
-				DBG("ioc.stopped"sv); ioc.restart();
-			}
+				TRACE("ioc.stopped"sv); ioc.restart();
 		}
 		~AsyncSession();
-		void Run()noexcept;
+		void Run()ι;
 	private:
-		void OnResolve( error_code ec, tcp::resolver::results_type results )noexcept;
-		void OnConnect(error_code ec, tcp::resolver::results_type::endpoint_type)noexcept;
-		void OnHandshake( error_code ec )noexcept;
-		void OnWrite( error_code ec, uint bytes_transferred )noexcept;
-		void OnRead( error_code ec, uint bytes_transferred )noexcept;
-		void OnShutdown( error_code ec )noexcept;
-		Ŧ Write( function<uint(http::request<T>& req)> setBody )noexcept->void;
+		void OnResolve( error_code ec, tcp::resolver::results_type results )ι;
+		void OnConnect(error_code ec, tcp::resolver::results_type::endpoint_type)ι;
+		void OnHandshake( error_code ec )ι;
+		void OnWrite( error_code ec, uint bytes_transferred )ι;
+		void OnRead( error_code ec, uint bytes_transferred )ι;
+		void OnShutdown( error_code ec )ι;
+		Ŧ Write( function<uint(http::request<T>& req)> setBody )ι->void;
 
 		SslArg Arg;
 		ssl::context _context{ ssl::context::tlsv12_client };
@@ -45,7 +43,7 @@ namespace Jde::Ssl
 		constexpr static Duration Timeout{ 30s };
 	};
 
-	Ŧ AsyncSession::Write( function<uint(http::request<T>& req)> setBody )noexcept->void
+	Ŧ AsyncSession::Write( function<uint(http::request<T>& req)> setBody )ι->void
 	{
 		auto pReq = make_unique<http::request<T>>( Arg.Verb, Arg.Target, 11 );
 		auto& req = *pReq;
@@ -62,9 +60,11 @@ namespace Jde::Ssl
 			req.set( http::field::authorization, boost::beast::string_view{Arg.Authorization.data(), Arg.Authorization.size()} );
 		req.prepare_payload();
 		_pRequest = move(pReq);
-
-		Logging::Log( Logging::Message{_requestLevel.Level, "({})http://{}:{}{}", _sl}, to_string(Arg.Verb), Arg.Host, Arg.Port, Arg.Target );
+		var& sl = _sl;
+		LOGSL( _requestLevel->Level, _logTag, "({})http://{}:{}{}", _handle, Arg.Host, Arg.Port, Arg.Target );
+		//Logging::Log( Logging::Message{_requestLevel->Level, "({})http://{}:{}{}", _sl}, to_string(Arg.Verb), Arg.Host, Arg.Port, Arg.Target );
 		http::async_write( _stream, req, beast::bind_front_handler(&AsyncSession::OnWrite,shared_from_this()) );
 	}
 }
 #undef var
+#undef _logTag

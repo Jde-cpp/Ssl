@@ -12,8 +12,8 @@
 
 namespace Jde
 {
-	static sp<LogTag> _logLevel{ Logging::TagLevel( "net" ) };
-	α Ssl::NetLevel()ι->const LogTag&{ return _logLevel; }
+	static sp<Jde::LogTag> _logTag{ Logging::Tag( "net" ) };
+	α Ssl::NetTag()ι->sp<LogTag>{ return _logTag; }
 
 	α Ssl::DecodeUri( sv x )ι->string
 	{

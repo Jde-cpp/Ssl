@@ -10,8 +10,7 @@
 namespace Jde
 {
 	using namespace Jde::Coroutine;
-	namespace Ssl
-	{
+	namespace Ssl{
 		Φ RsaSign( sv value, sv key )->string;
 		Φ DecodeUri( sv str )ι->string;
 		Ŧ static Encode( std::basic_string_view<T> str )ι->string;
@@ -35,7 +34,7 @@ namespace Jde
 		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )ι->bool;
 		Ŧ SetRequest( http::request<T>& req, sv host, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )ι->void;
 		Ŧ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )ε->string;
-		Φ NetLevel()ι->const LogTag&;
+		Φ NetTag()ι->sp<LogTag>;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define var const auto
@@ -111,7 +110,7 @@ namespace Jde
 		req.prepare_payload();
 	}
 
-#define _logLevel NetLevel()
+#define _logTag NetTag()
 	template<>
 	inline string Ssl::Get( sv host, sv target, sv authorization )ε
 	{
@@ -241,7 +240,7 @@ namespace Jde
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
 		}
-		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, move(result), NetLevel().Level) );
+		THROW_IFX( resultValue!=200 && resultValue!=204 && resultValue!=302, NetException(host, target, resultValue, move(result), ELogLevel::Error) );
 
 		/*https://github.com/boostorg/beast/issues/824
 		boost::beast::error_code ec;
@@ -256,4 +255,4 @@ namespace Jde
 }
 #undef var
 #undef Φ
-#undef _logLevel
+#undef _logTag

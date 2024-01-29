@@ -1,25 +1,25 @@
 ﻿#pragma once
 #include "TypeDefs.h"
-namespace Jde::Ssl
-{
+#include "Ssl.h"
+
+#define _logTag Ssl::NetTag()
+namespace Jde::Ssl{
 	struct  SslWorker;
 	using Stream=boost::beast::ssl_stream<boost::beast::tcp_stream>;
 
-	struct SslArg final
-	{
-		SslArg( string&& host, string&& target, string&& authorization, str userAgent, ELogLevel level )noexcept:
+	struct SslArg final{
+		SslArg( string&& host, string&& target, string&& authorization, str userAgent, ELogLevel level )ι:
 			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, UserAgent{ userAgent }, Level{ level }
 		{}
-		SslArg( string&& host, string&& target, string&& authorization, http::verb verb )noexcept:
+		SslArg( string&& host, string&& target, string&& authorization, http::verb verb )ι:
 			Host(move(host)), Target{ move(target) }, Authorization{ move(authorization) }, Verb{ verb }
 		{}
-		~SslArg()
-		{
+		~SslArg(){
 			if( KeepAlive )
-				DBG( "~SslArg::KeepAlive={}"sv, (KeepAlive ? KeepAlive.use_count() : 0) );
+				TRACE( "~SslArg::KeepAlive={}"sv, (KeepAlive ? KeepAlive.use_count() : 0) );
 		}
-		α SetWorker( sp<SslWorker>& p )noexcept{ KeepAlive=p; }
-		α Path()const noexcept{ return format("{}/{}", Host, Target); }
+		α SetWorker( sp<SslWorker>& p )ι{ KeepAlive=p; }
+		α Path()Ι{ return format("{}/{}", Host, Target); }
 
 		string Host;
 		string Target;
@@ -38,3 +38,4 @@ namespace Jde::Ssl
 		sp<SslWorker> KeepAlive;
 	};
 }
+#undef _logTag
