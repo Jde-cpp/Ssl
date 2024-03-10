@@ -1,25 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-project(Ssl)
-set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
-include(SetUpConfigurations)
-#set(CMAKE_CXX_FLAGS "-std=c++17")
-#https://github.com/boostorg/beast/issues/1916
+project(Jde.Ssl)
+set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Public/build )
+include(common)
 #######################################################
-#if(MSVC)
-#	add_compile_options(PRIVATE /W4 /WX)
-#else()
-#	add_compile_options( -Wall -Wno-unknown-pragmas )
-#endif()
-#######################################################
-#add_link_options( "LINKER:-z,origin-shared" )
-#add_link_options( "LINKER:-rpath=$ORIGIN" )
 set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,-rpath=$ORIGIN")
 
-add_library( Jde.Ssl SHARED Ssl.cpp SslCo.cpp SslWorker.cpp AsyncSession.cpp )
+add_library( ${CMAKE_PROJECT_NAME} SHARED Ssl.cpp SslCo.cpp SslWorker.cpp AsyncSession.cpp )
 #######################################################
-target_link_libraries(Jde.Ssl Threads::Threads)
+target_link_libraries( ${CMAKE_PROJECT_NAME} Threads::Threads)
+target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized fmt::libfmt.a )
 #######################################################
-target_precompile_headers(Jde.Ssl
+target_precompile_headers( ${CMAKE_PROJECT_NAME}
   PRIVATE
   <jde/TypeDefs.h>
   <jde/coroutine/Task.h>

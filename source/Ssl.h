@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef SSL_H
+#define SSL_H
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
@@ -7,19 +9,18 @@
 #include "./TypeDefs.h"
 
 #define Φ JDE_SSL_EXPORT auto
-namespace Jde
-{
+namespace Jde{
 	using namespace Jde::Coroutine;
 	namespace Ssl{
-		Φ RsaSign( sv value, sv key )->string;
+		//Φ RsaSign( sv value, sv key )->string;
 		Φ DecodeUri( sv str )ι->string;
 		Ŧ static Encode( std::basic_string_view<T> str )ι->string;
 
-		template<class T, class I=T::const_iterator> α Encode64( const T& val )->string;
+		template<class T, class I=T::const_iterator> α Encode64( const T& val )ι->string;
 		template<class T=string> α Decode64( string s, bool convertFromFileSafe=false )ε->T;
 
 		//static string RsaPemFromModExp( str modulus, str exponent )ε;
-		Φ Verify( const vector<unsigned char>& modulus, const vector<unsigned char>& exponent, str decrypted, str encrypted )ε->void;
+		//Φ Verify( const vector<unsigned char>& modulus, const vector<unsigned char>& exponent, str decrypted, str encrypted )ε->void;
 
 		Ŧ Get( sv host, sv target, sv authorization={} )ε->T;
 
@@ -40,8 +41,7 @@ namespace Jde
 #define var const auto
 	//https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
 	template<typename T>
-	string Ssl::Encode( std::basic_string_view<T> url )ι
-	{
+	string Ssl::Encode( std::basic_string_view<T> url )ι{
 		ostringstream os;
 		std::ostream hexcout{ os.rdbuf() };
 		hexcout << std::hex << std::uppercase << std::setfill('0');
@@ -50,22 +50,18 @@ namespace Jde
 		{
 			char16_t wch = *p;
 			char16_t compare = 128U;
-			if( wch<compare )
-			{
+			if( wch<compare ){
 				char ch = (char)*p;
 				if( isalnum(*p) || ch == '-' || ch == '_' || ch == '.' || ch == '~' )
 					os << ch;
-				else
-				{
+				else{
 					os << '%';
 					int x = ch;
 					hexcout << std::setw(2) << x;
 				}
 			}
-			else
-			{
-				auto output = [&]( char8_t ch )
-				{
+			else{
+				auto output = [&]( char8_t ch ){
 					os << '%';
 					hexcout << std::setw(2) << (uint16_t)ch;//https://stackoverflow.com/questions/1532640/which-iomanip-manipulators-are-sticky
 				};
@@ -77,9 +73,8 @@ namespace Jde
 		}
 		return os.str();
 	}
-
-	Ŧ Ssl::Decode64( string s, bool convertFromFileSafe )ε->T //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
-	{
+	#pragma GCC diagnostic ignored "-Wsubobject-linkage"
+	Ŧ Ssl::Decode64( string s, bool convertFromFileSafe )ε->T{ //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
 		if (convertFromFileSafe)
 			s = Str::Replace(Str::Replace(s, '_', '/'), '-', '+');
 		using namespace boost::archive::iterators;
@@ -88,8 +83,7 @@ namespace Jde
 	}
 
 	//https://stackoverflow.com/questions/7053538/how-do-i-encode-a-string-to-base64-using-only-boost
-	template<class T, class I> α Ssl::Encode64( const T& val )->string
-	{
+	template<class T, class I> α Ssl::Encode64( const T& val )ι->string{
 		//typename T;
 		using namespace boost::archive::iterators;
 		using It = base64_from_binary<transform_width<I, 6, 8>>;
@@ -98,8 +92,7 @@ namespace Jde
 	}
 
 	template<typename TBody>
-	void Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )ι
-	{
+	void Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )ι{
 		req.set( http::field::user_agent, userAgent.size() ? string{userAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
 		req.set( http::field::accept_encoding, "gzip" );
@@ -112,8 +105,7 @@ namespace Jde
 
 #define _logTag NetTag()
 	template<>
-	inline string Ssl::Get( sv host, sv target, sv authorization )ε
-	{
+	inline string Ssl::Get( sv host, sv target, sv authorization )ε{
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
 		SetRequest( req, host, {}, authorization );
 		TRACE( "Get {}{}"sv, host, target );
@@ -121,17 +113,14 @@ namespace Jde
 	}
 
 	template<typename TResult>
-	TResult Ssl::Get( sv host, sv target, sv authorization )ε
-	{
+	TResult Ssl::Get( sv host, sv target, sv authorization )ε{
 		var result = Get<string>( host, target, authorization );
 		var j = nlohmann::json::parse( result );
 		return j.get<TResult>();
 	}
 	template<typename TResult>
-	TResult Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )ε
-	{
-		auto fnctn = [&path](http::request<http::file_body>& req)
-		{
+	TResult Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )ε{
+		auto fnctn = [&path](http::request<http::file_body>& req){
 			boost::beast::error_code ec;
 			http::file_body::value_type body;
 			body.open( path.string().c_str(), boost::beast::file_mode::read, ec );
@@ -144,8 +133,7 @@ namespace Jde
 	}
 
 	template<typename TResultx, typename TBody>
-	TResultx Ssl::Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )ε
-	{
+	TResultx Ssl::Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )ε{
 		http::request<TBody> req{ verb, string(target), 11 };
 		SetRequest( req, host, contentType, authorization );
 
@@ -153,21 +141,18 @@ namespace Jde
 
 		var result = Send( req, host );
 		var j = nlohmann::json::parse( result );
-		try
-		{
+		try{
 			TResultx result2;
 			from_json( j, result2 );
 			return result2;
 		}
-		catch( const std::exception& e )
-		{
+		catch( const std::exception& e ){
 			THROW( e.what() );
 		}
 	}
 
 	template<typename TBody>
-	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )ε//boost::wrapexcept<boost::system::system_error>
-	{
+	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )ε{//boost::wrapexcept<boost::system::system_error>
 		boost::asio::io_context ioc;
 		ssl::context ctx( ssl::context::tlsv12_client );
       //load_root_certificates( ctx );
@@ -176,58 +161,47 @@ namespace Jde
 		boost::beast::ssl_stream<boost::beast::tcp_stream> stream( ioc, ctx ); //ssl::stream<tcp::socket> stream{ioc, ctx};
 		THROW_IFX( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()), BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
 		stream.set_verify_callback( &verify_certificate );
-		try
-		{
+		try{
 			var results = resolver.resolve( host, "443" );
-			try
-			{
+			try{
 				boost::beast::get_lowest_layer( stream ).connect( results );
 				stream.handshake( ssl::stream_base::client );
 			}
-			catch( boost::wrapexcept<boost::system::system_error>& e )
-			{
+			catch( boost::wrapexcept<boost::system::system_error>& e ){
 				throw BoostCodeException( e.code() );
 			}
-			catch( const boost::system::system_error& e )
-			{
+			catch( const boost::system::system_error& e ){
 				throw BoostCodeException( e.code() );
 			}
 		}
-		catch( boost::wrapexcept<boost::system::system_error>& e )
-		{
-			throw BoostCodeException{ e.code(), format("Could not resolve {}/{}"sv, host, target) };//TODO take out format
+		catch( boost::wrapexcept<boost::system::system_error>& e ){
+			throw BoostCodeException{ e.code(), Jde::format("Could not resolve {}/{}"sv, host, target) };//TODO take out format
 		}
 
 		http::write( stream, req );
 		http::response<http::dynamic_body> response;
 		boost::beast::flat_buffer buffer;
-		try
-		{
+		try{
 			http::read( stream, buffer, response );
 		}
-		catch( boost::wrapexcept<boost::system::system_error>& e )
-		{
+		catch( boost::wrapexcept<boost::system::system_error>& e ){
 			throw BoostCodeException{ e.code() };
 		}
-		catch( const boost::system::system_error& e )
-		{
+		catch( const boost::system::system_error& e ){
 			throw BoostCodeException{ e.code() };
 		}
 		var& body = response.body();
 		auto result = boost::beast::buffers_to_string( body.data() );
 		var resultValue = response.result_int();
 		var& header = response.base();
-		auto findHeader = [&header]( const CIString& name )->string
-		{
-			for( var& h : header )
-			{//	DBG( "[{}]={}"sv, h.name_string(), h.value() );
+		auto findHeader = [&header]( const CIString& name )->string{
+			for( var& h : header ){
 				if( h.name_string()==name )
 					return string{ h.value() };
 			}
 			return {};
 		};
-		if( resultValue==302 )
-		{
+		if( resultValue==302 ){
 			var location = findHeader( "Location"sv );
 			WARN( "redirecting from {}{} to {}"sv, host, target, location );
 			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), NetException(host, target, resultValue, location) );
@@ -235,8 +209,7 @@ namespace Jde
 			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
 		}
 		var contentEncoding = findHeader( "Content-Encoding"sv );//TODO handle set-cookie
-		if( contentEncoding=="gzip" )
-		{
+		if( contentEncoding=="gzip" ){
 			std::istringstream is{ result };
 			result = IO::Zip::GZip::Read( is ).str();
 		}
@@ -256,3 +229,4 @@ namespace Jde
 #undef var
 #undef Φ
 #undef _logTag
+#endif

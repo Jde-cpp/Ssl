@@ -13,8 +13,10 @@ namespace Jde::Ssl{
 	{
 		AsyncSession( SslArg&& arg, boost::asio::io_context& ioc, SRCE )ι:Arg{ move(arg) }, _resolver{ioc}, _stream{ioc,_context}, _sl{sl}, _handle{++Handle}
 		{
-			if( ioc.stopped() )
-				TRACE("ioc.stopped"sv); ioc.restart();
+			if( ioc.stopped() ){
+				TRACE("ioc.stopped"); 
+				ioc.restart();
+			}
 		}
 		~AsyncSession();
 		void Run()ι;

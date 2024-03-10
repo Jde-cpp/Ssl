@@ -19,7 +19,7 @@ namespace Jde::Ssl{
 				TRACE( "~SslArg::KeepAlive={}"sv, (KeepAlive ? KeepAlive.use_count() : 0) );
 		}
 		α SetWorker( sp<SslWorker>& p )ι{ KeepAlive=p; }
-		α Path()Ι{ return format("{}/{}", Host, Target); }
+		α Path()Ι{ return Jde::format("{}/{}", Host, Target); }
 
 		string Host;
 		string Target;
