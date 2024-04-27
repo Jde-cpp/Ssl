@@ -1,10 +1,12 @@
 ﻿#pragma once
 #ifndef SSL_H
 #define SSL_H
+DISABLE_WARNINGS
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/remove_whitespace.hpp>
+ENABLE_WARNINGS
 #include <jde/Str.h>
 #include "./TypeDefs.h"
 
