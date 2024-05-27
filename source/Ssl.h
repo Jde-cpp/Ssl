@@ -8,6 +8,7 @@ DISABLE_WARNINGS
 #include <boost/archive/iterators/remove_whitespace.hpp>
 ENABLE_WARNINGS
 #include <jde/Str.h>
+#include <jde/io/Json.h>
 #include "./TypeDefs.h"
 
 #define Φ JDE_SSL_EXPORT auto
@@ -117,7 +118,7 @@ namespace Jde{
 	template<typename TResult>
 	TResult Ssl::Get( sv host, sv target, sv authorization )ε{
 		var result = Get<string>( host, target, authorization );
-		var j = nlohmann::json::parse( result );
+		var j = Json::Parse( result );
 		return j.get<TResult>();
 	}
 	template<typename TResult>
@@ -142,7 +143,7 @@ namespace Jde{
 		req.content_length( setBody(req) );
 
 		var result = Send( req, host );
-		var j = nlohmann::json::parse( result );
+		var j = Json::Parse( result );
 		try{
 			TResultx result2;
 			from_json( j, result2 );
