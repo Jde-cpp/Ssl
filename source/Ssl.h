@@ -13,7 +13,10 @@ ENABLE_WARNINGS
 
 #define Φ JDE_SSL_EXPORT auto
 namespace Jde{
-	using namespace Jde::Coroutine;
+	namespace Http{
+		Φ Send( sv host, sv target, sv body, sv port="80", sv authorization={}, sv contentType="application/x-www-form-urlencoded", http::verb verb=http::verb::get, flat_map<string,string>* pReturnedHeaders=nullptr )ε->string;
+	}
+	//using namespace Jde::Coroutine;
 	namespace Ssl{
 		//Φ RsaSign( sv value, sv key )->string;
 		Φ DecodeUri( sv str )ι->string;
@@ -25,19 +28,15 @@ namespace Jde{
 		//static string RsaPemFromModExp( str modulus, str exponent )ε;
 		//Φ Verify( const vector<unsigned char>& modulus, const vector<unsigned char>& exponent, str decrypted, str encrypted )ε->void;
 
-		Ŧ Get( sv host, sv target, sv authorization={} )ε->T;
-
-		Ŧ Send( sv host, sv target, sv body, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )ε->T{ return Send<T,http::string_body>( host, target, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
-
+		Ŧ Get( sv host, sv target, sv port="443", sv authorization={} )ε->T;
 		Φ SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )ε->string;
-
-		template<class TResult, class TBody> static TResult Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, http::verb verb=http::verb::post )ε;
-
-		Ŧ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={} )ε->T;
+		Ŧ PostFile( sv host, sv target, const fs::path& path, sv contentType="application/x-www-form-urlencoded", sv authorization={} )ε->T;
 
 		Φ verify_certificate( bool preverified, boost::asio::ssl::verify_context& ctx )ι->bool;
-		Ŧ SetRequest( http::request<T>& req, sv host, sv contentType="application/x-www-form-urlencoded"sv, sv authorization={}, sv userAgent={} )ι->void;
-		Ŧ Send( http::request<T>& req, sv host, sv target={}, sv authorization={} )ε->string;
+		Ŧ SetRequest( http::request<T>& req, sv host, sv contentType="application/x-www-form-urlencoded", sv authorization={}, sv userAgent={} )ι->void;
+		Ŧ Send( sv host, sv target, sv body, sv port="443", sv contentType="application/x-www-form-urlencoded", sv authorization={}, http::verb verb=http::verb::post )ε->T{ return Send<T,http::string_body>( host, target, port, [body](http::request<http::string_body>& req){req.body() = body; return body.size();}, contentType, authorization, verb ); }
+		template<class TResult, class TBody> α Send( sv host, sv target, sv port, std::function<uint(http::request<TBody>&)> setBody, sv contentType="application/x-www-form-urlencoded", sv authorization={}, http::verb verb=http::verb::post )ε->TResult;
+		Ŧ Send( http::request<T>& req, sv host, sv target={}, sv port="443", sv authorization={} )ε->string;
 		Φ NetTag()ι->sp<LogTag>;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,8 +48,7 @@ namespace Jde{
 		std::ostream hexcout{ os.rdbuf() };
 		hexcout << std::hex << std::uppercase << std::setfill('0');
 		var end = url.data()+url.size();
-		for( auto p=url.data(); p<end; ++p )
-		{
+		for( auto p=url.data(); p<end; ++p ){
 			char16_t wch = *p;
 			char16_t compare = 128U;
 			if( wch<compare ){
@@ -95,7 +93,7 @@ namespace Jde{
 	}
 
 	template<typename TBody>
-	void Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )ι{
+	α Ssl::SetRequest( http::request<TBody>& req, sv host, sv contentType, sv authorization, sv userAgent )ι->void{
 		req.set( http::field::user_agent, userAgent.size() ? string{userAgent} : BOOST_BEAST_VERSION_STRING );
 		req.set( http::field::host, string{host} );
 		req.set( http::field::accept_encoding, "gzip" );
@@ -108,21 +106,21 @@ namespace Jde{
 
 #define _logTag NetTag()
 	template<>
-	inline string Ssl::Get( sv host, sv target, sv authorization )ε{
+	Ξ Ssl::Get( sv host, sv target, sv port, sv authorization )ε->string{
 		http::request<http::empty_body> req{ http::verb::get, string(target), 11 };
 		SetRequest( req, host, {}, authorization );
-		TRACE( "Get {}{}"sv, host, target );
-		return Send( req, host, target, authorization );
+		TRACE( "Get {}{}", host, target );
+		return Send( req, host, target, port, authorization );
 	}
 
 	template<typename TResult>
-	TResult Ssl::Get( sv host, sv target, sv authorization )ε{
-		var result = Get<string>( host, target, authorization );
+	α Ssl::Get( sv host, sv target, sv port, sv authorization )ε->TResult{
+		var result = Get<string>( host, target, port, authorization );
 		var j = Json::Parse( result );
 		return j.get<TResult>();
 	}
 	template<typename TResult>
-	TResult Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )ε{
+	α Ssl::PostFile( sv host, sv target, const fs::path& path, sv contentType, sv authorization )ε->TResult{
 		auto fnctn = [&path](http::request<http::file_body>& req){
 			boost::beast::error_code ec;
 			http::file_body::value_type body;
@@ -135,27 +133,31 @@ namespace Jde{
 		return Send<TResult,http::file_body>( host, target, fnctn, contentType, authorization );
 	}
 
-	template<typename TResultx, typename TBody>
-	TResultx Ssl::Send( sv host, sv target, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )ε{
-		http::request<TBody> req{ verb, string(target), 11 };
+	template<>
+	Ξ Ssl::Send<string,http::string_body>( sv host, sv target, sv port, std::function<uint(http::request<http::string_body>&)> setBody, sv contentType, sv authorization, http::verb verb )ε->string{
+		http::request<http::string_body> req{ verb, string(target), 11 };
 		SetRequest( req, host, contentType, authorization );
-
 		req.content_length( setBody(req) );
-
-		var result = Send( req, host );
-		var j = Json::Parse( result );
+		return Send( req, host, target, port, authorization );
+	}
+	
+	template<typename TResult, typename TBody>
+	α Ssl::Send( sv host, sv target, sv port, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )ε->TResult{
+		auto httpResult = Send<string,http::string_body>( host, target, port, setBody, contentType, authorization, verb );
+		//THROW( "not implemented" );
+		var j = Json::Parse( httpResult );
 		try{
-			TResultx result2;
-			from_json( j, result2 );
-			return result2;
+			TResult result;
+			from_json( j, result );
+			return result;
 		}
 		catch( const std::exception& e ){
-			THROW( e.what() );
+			THROW( "json deserialization error={}", e.what() );
 		}
 	}
 
 	template<typename TBody>
-	string Ssl::Send( http::request<TBody>& req, sv host, sv target, sv authorization )ε{//boost::wrapexcept<boost::system::system_error>
+	α Ssl::Send( http::request<TBody>& req, sv host, sv target, sv port, sv authorization )ε->string{
 		boost::asio::io_context ioc;
 		ssl::context ctx( ssl::context::tlsv12_client );
       //load_root_certificates( ctx );
@@ -165,7 +167,7 @@ namespace Jde{
 		THROW_IFX( !SSL_set_tlsext_host_name(stream.native_handle(), string{host}.c_str()), BoostCodeException(boost::system::error_code{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()}) );
 		stream.set_verify_callback( &verify_certificate );
 		try{
-			var results = resolver.resolve( host, "443" );
+			var results = resolver.resolve( host, port );
 			try{
 				boost::beast::get_lowest_layer( stream ).connect( results );
 				stream.handshake( ssl::stream_base::client );
@@ -178,7 +180,7 @@ namespace Jde{
 			}
 		}
 		catch( boost::wrapexcept<boost::system::system_error>& e ){
-			throw BoostCodeException{ e.code(), Jde::format("Could not resolve {}/{}"sv, host, target) };//TODO take out format
+			throw BoostCodeException{ e.code(), Jde::format("Could not resolve {}:{}/{}", host, port, target) };//TODO take out format
 		}
 
 		http::write( stream, req );
@@ -206,7 +208,7 @@ namespace Jde{
 		};
 		if( resultValue==302 ){
 			var location = findHeader( "Location"sv );
-			WARN( "redirecting from {}{} to {}"sv, host, target, location );
+			WARN( "redirecting from {}{} to {}", host, target, location );
 			var startHost = location.find_first_of( "//" ); THROW_IFX( startHost==string::npos || startHost+3>location.size(), NetException(host, target, resultValue, location) );
 			var startTarget = location.find_first_of( "/", startHost+2 );
 			return Get<string>( location.substr(startHost+2, startTarget-startHost-2), startTarget==string::npos ? string{} : location.substr(startTarget), authorization );
@@ -223,7 +225,7 @@ namespace Jde{
 		stream.shutdown( ec );
 		const boost::beast::error_code eof{ boost::asio::error::eof };//already_open==1, eof==2
 		if( ec != eof )
-			DBG( "stream.shutdown error='{}'"sv, ec.message() );
+			DBG( "stream.shutdown error='{}'", ec.message() );
 			//THROW( BoostCodeException(ec) );
 		*/
 		return result;

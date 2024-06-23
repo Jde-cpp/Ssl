@@ -10,10 +10,44 @@
 //#include <jde/Assert.h>
 #define var const auto
 
-namespace Jde
-{
+namespace Jde{
 	static sp<Jde::LogTag> _logTag{ Logging::Tag( "net" ) };
 	α Ssl::NetTag()ι->sp<LogTag>{ return _logTag; }
+
+	α Http::Send( sv host, sv target, sv body, sv port, sv authorization, sv contentType, http::verb verb, flat_map<string,string>* pReturnedHeaders )ε->string{
+		namespace beast = boost::beast;
+		boost::asio::io_context ioc;
+		tcp::resolver resolver{ ioc };
+    beast::tcp_stream stream(ioc);
+		var results = resolver.resolve(host, port);
+    stream.connect( results );
+		http::request<http::string_body> req{ verb, string{target}, 11 };
+		req.content_length( body.size() );
+		if( !authorization.empty() )
+			req.set( http::field::authorization, authorization );
+		req.body() = body;
+		req.set( http::field::host, host );
+		req.set( http::field::content_type, contentType );
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    http::write( stream, req );
+    beast::flat_buffer buffer;
+    http::response<http::string_body> res;
+    http::read( stream, buffer, res );
+		var resultValue = res.result_int();
+		THROW_IFX( resultValue!=200 && resultValue!=204, NetException(host, target, resultValue, res.body()) );
+		if( pReturnedHeaders ){
+			var& header = res.base();
+			for( var& h : header ){
+				if( auto p = pReturnedHeaders->find(h.name_string()); p!=pReturnedHeaders->end() )
+					p->second = h.value();
+			}
+		}
+		beast::error_code ec;
+		stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+		if( ec && ec != beast::errc::not_connected )
+				throw beast::system_error{ec};
+		return res.body();
+	}
 
 	α Ssl::DecodeUri( sv x )ι->string{
 		auto from_hex = [](char ch) { return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10; };
