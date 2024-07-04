@@ -14,6 +14,7 @@ ENABLE_WARNINGS
 #define Φ JDE_SSL_EXPORT auto
 namespace Jde{
 	namespace Http{
+		Φ Send( sv host, sv target, sv body, PortType port=80, sv authorization={}, sv contentType="application/x-www-form-urlencoded", http::verb verb=http::verb::get, flat_map<string,string>* pReturnedHeaders=nullptr )ε->string;
 		Φ Send( sv host, sv target, sv body, sv port="80", sv authorization={}, sv contentType="application/x-www-form-urlencoded", http::verb verb=http::verb::get, flat_map<string,string>* pReturnedHeaders=nullptr )ε->string;
 	}
 	//using namespace Jde::Coroutine;
@@ -140,7 +141,7 @@ namespace Jde{
 		req.content_length( setBody(req) );
 		return Send( req, host, target, port, authorization );
 	}
-	
+
 	template<typename TResult, typename TBody>
 	α Ssl::Send( sv host, sv target, sv port, std::function<uint(http::request<TBody>&)> setBody, sv contentType, sv authorization, http::verb verb )ε->TResult{
 		auto httpResult = Send<string,http::string_body>( host, target, port, setBody, contentType, authorization, verb );

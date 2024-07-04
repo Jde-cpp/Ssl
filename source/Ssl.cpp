@@ -13,7 +13,9 @@
 namespace Jde{
 	static sp<Jde::LogTag> _logTag{ Logging::Tag( "net" ) };
 	α Ssl::NetTag()ι->sp<LogTag>{ return _logTag; }
-
+	α Http::Send( sv host, sv target, sv body, PortType port, sv authorization, sv contentType, http::verb verb, flat_map<string,string>* pReturnedHeaders )ε->string{
+		return Http::Send( host, target, body, std::to_string(port), authorization, contentType, verb, pReturnedHeaders );
+	}
 	α Http::Send( sv host, sv target, sv body, sv port, sv authorization, sv contentType, http::verb verb, flat_map<string,string>* pReturnedHeaders )ε->string{
 		namespace beast = boost::beast;
 		boost::asio::io_context ioc;
