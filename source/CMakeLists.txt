@@ -14,7 +14,6 @@ target_precompile_headers( ${CMAKE_PROJECT_NAME}
   PRIVATE
   <jde/TypeDefs.h>
   <jde/coroutine/Task.h>
-	"../../Framework/source/io/Socket.h"
 	"../../Framework/source/io/AsioContextThread.h"
   "../../Framework/source/coroutine/Awaitable.h"
   "../../Framework/source/threading/InterruptibleThread.h"

@@ -4,8 +4,9 @@
 
 namespace Jde::Ssl
 {
-	α SslWorker::Push( SslArg&& x, SL sl )ι->void
-	{
-		ms<AsyncSession>( move(x), IO::AsioContextThread::Instance()->Context(), sl )->Run();
+	α SslWorker::Push( SslArg&& x, SL sl )ι->void{
+		auto p = IO::AsioContextThread();
+		ASSERT( p );
+		ms<AsyncSession>( move(x), *p, sl )->Run();
 	}
 }
