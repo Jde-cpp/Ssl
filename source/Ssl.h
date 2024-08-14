@@ -2,7 +2,6 @@
 #ifndef SSL_H
 #define SSL_H
 DISABLE_WARNINGS
-#include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/remove_whitespace.hpp>
@@ -23,11 +22,7 @@ namespace Jde{
 		Φ DecodeUri( sv str )ι->string;
 		Ŧ static Encode( std::basic_string_view<T> str )ι->string;
 
-		template<class T, class I=T::const_iterator> α Encode64( const T& val )ι->string;
-		template<class T=string> α Decode64( string s, bool convertFromFileSafe=false )ε->T;
-
-		//static string RsaPemFromModExp( str modulus, str exponent )ε;
-		//Φ Verify( const vector<unsigned char>& modulus, const vector<unsigned char>& exponent, str decrypted, str encrypted )ε->void;
+		template<class T=string> α Decode64( sv s, bool convertFromFileSafe=false )ε->T;
 
 		Ŧ Get( sv host, sv target, sv port="443", sv authorization={} )ε->T;
 		Φ SendEmpty( sv host, sv target, sv authorization={}, http::verb verb=http::verb::post )ε->string;
@@ -76,21 +71,22 @@ namespace Jde{
 		return os.str();
 	}
 	#pragma GCC diagnostic ignored "-Wsubobject-linkage"
-	Ŧ Ssl::Decode64( string s, bool convertFromFileSafe )ε->T{ //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
-		if (convertFromFileSafe)
-			s = Str::Replace(Str::Replace(s, '_', '/'), '-', '+');
-		using namespace boost::archive::iterators;
-		typedef transform_width< binary_from_base64<remove_whitespace<string::const_iterator> >, 8, 6 > IT;
-		return T{ IT(s.begin()), IT(s.end()) };
+	template<> Ξ Ssl::Decode64<vector<byte>>( sv s, bool convertFromFileSafe )ε->vector<byte>{ //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
+		string converted = Decode64<string>( s, convertFromFileSafe );
+		std::span<byte> bytes{ (byte*)converted.data(), converted.size() };
+		return vector<byte>{ bytes.begin(), bytes.end() };
 	}
 
-	//https://stackoverflow.com/questions/7053538/how-do-i-encode-a-string-to-base64-using-only-boost
-	template<class T, class I> α Ssl::Encode64( const T& val )ι->string{
-		//typename T;
+	Ŧ Ssl::Decode64( sv s, bool convertFromFileSafe )ε->T{ //https://stackoverflow.com/questions/10521581/base64-encode-using-boost-throw-exception
+		string converted;
+		sv text = s;
+		if (convertFromFileSafe){
+			converted = s;
+			text = Str::Replace(Str::Replace(converted, '_', '/'), '-', '+');
+		}
 		using namespace boost::archive::iterators;
-		using It = base64_from_binary<transform_width<I, 6, 8>>;
-		auto t = string( It(std::begin(val)), It(std::end(val)) );
-		return t.append( (3 - val.size() % 3) % 3, '=' );
+		using TW = transform_width<binary_from_base64<remove_whitespace<string::const_iterator>>, 8, 6>;
+		return T{ TW(text.begin()), TW(text.end()) };
 	}
 
 	template<typename TBody>
